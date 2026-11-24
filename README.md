@@ -1,4 +1,4 @@
-# greatSumini/skills
+# Matfia skills
 
 매일 쓰는 Claude Code skill · sub-agent · 하네스 자산 모음. 작고 고치기 쉽게 만들고, 필요한 조각만 골라 쓴다.
 
