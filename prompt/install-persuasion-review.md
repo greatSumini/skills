@@ -4,7 +4,7 @@
 
 ---
 
-너(Claude)는 지금 타겟 프로젝트의 레포 루트에서 실행 중이다. 아래 절차를 **순서대로** 수행해 `persuasion-review` skill 과 부속 자산을 이 프로젝트에 설치해라. 자료는 [`greatSumini/cc-system`](https://github.com/greatSumini/cc-system) 레포에서 가져온다.
+너(Claude)는 지금 타겟 프로젝트의 레포 루트에서 실행 중이다. 아래 절차를 **순서대로** 수행해 `persuasion-review` skill 과 부속 자산을 이 프로젝트에 설치해라. 자료는 [`greatSumini/skills`](https://github.com/greatSumini/skills) 레포에서 가져온다.
 
 ---
 
@@ -20,7 +20,7 @@ ls .claude 2>/dev/null  # 이미 .claude 가 있으면 기존 파일과 충돌�
 
 ```bash
 CC_SYSTEM=$(mktemp -d)/cc-system
-git clone --depth=1 https://github.com/greatSumini/cc-system.git "$CC_SYSTEM"
+git clone --depth=1 https://github.com/greatSumini/skills.git "$CC_SYSTEM"
 ```
 
 clone 실패 시 사용자에게 network 이슈 가능성을 보고하고 중단.
@@ -33,14 +33,14 @@ clone 실패 시 사용자에게 network 이슈 가능성을 보고하고 중단
 
 | From (cc-system 내)                  | To (타겟 프로젝트)                   | 비고                                                                           |
 | ------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------ |
-| `.claude/skills/persuasion-review/`  | `.claude/skills/persuasion-review/`  | skill 본체 + SPEC + scripts 통째                                               |
-| `.claude/agents/tech-critic-lead.md` | `.claude/agents/tech-critic-lead.md` | 자율 루프·ideation 이식 시에만 필요. persuasion-review 단독 사용이면 생략 가능 |
+| `skills/harness/persuasion-review/`  | `.claude/skills/persuasion-review/`  | skill 본체 + SPEC + scripts 통째                                               |
+| `agents/tech-critic-lead.md` | `.claude/agents/tech-critic-lead.md` | 자율 루프·ideation 이식 시에만 필요. persuasion-review 단독 사용이면 생략 가능 |
 
 ```bash
 mkdir -p .claude/skills .claude/agents persuasion-data
-cp -R "$CC_SYSTEM/.claude/skills/persuasion-review" .claude/skills/
+cp -R "$CC_SYSTEM/skills/harness/persuasion-review" .claude/skills/
 # (선택) ideation/tech-critic-lead 도 함께 이식할 때만:
-# cp "$CC_SYSTEM/.claude/agents/tech-critic-lead.md" .claude/agents/
+# cp "$CC_SYSTEM/agents/tech-critic-lead.md" .claude/agents/
 ```
 
 목적지에 같은 이름 파일/디렉토리가 이미 있으면 **덮어쓰지 말고** 사용자에게 diff 를 보여주고 어떻게 머지할지 물어라.

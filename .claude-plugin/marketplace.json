@@ -1,0 +1,17 @@
+{
+  "name": "greatsumini",
+  "owner": {
+    "name": "Sumin Choi",
+    "url": "https://github.com/greatSumini"
+  },
+  "description": "greatSumini's Claude Code skills, as an installable plugin.",
+  "plugins": [
+    {
+      "name": "greatsumini-skills",
+      "source": "./",
+      "description": "커밋·출하, Gmail·캘린더·전사, Claude Code skill/hook/서브에이전트 제작 도구 모음.",
+      "category": "productivity",
+      "keywords": ["skills", "git", "gmail", "calendar", "claude-code"]
+    }
+  ]
+}

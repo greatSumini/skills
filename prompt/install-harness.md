@@ -6,7 +6,7 @@
 
 ---
 
-너(Claude)는 지금 타겟 프로젝트의 레포 루트에서 실행 중이다. 아래 절차를 **순서대로** 수행해 [`greatSumini/cc-system`](https://github.com/greatSumini/cc-system) 의 자율 주행 하네스를 설치해라. cc-system 쪽은 절대 수정하지 않는다.
+너(Claude)는 지금 타겟 프로젝트의 레포 루트에서 실행 중이다. 아래 절차를 **순서대로** 수행해 [`greatSumini/skills`](https://github.com/greatSumini/skills) 의 자율 주행 하네스를 설치해라. cc-system 쪽은 절대 수정하지 않는다.
 
 ---
 
@@ -26,7 +26,7 @@ ls .claude 2>/dev/null                # 기존 .claude 와 충돌 여부
 
 ```bash
 CC_SYSTEM=$(mktemp -d)/cc-system
-git clone --depth=1 https://github.com/greatSumini/cc-system.git "$CC_SYSTEM"
+git clone --depth=1 https://github.com/greatSumini/skills.git "$CC_SYSTEM"
 ```
 
 ---
@@ -39,13 +39,13 @@ git clone --depth=1 https://github.com/greatSumini/cc-system.git "$CC_SYSTEM"
 mkdir -p .claude/skills .claude/agents scripts prompts
 
 # Skills (4종)
-cp -R "$CC_SYSTEM/.claude/skills/persuasion-review"  .claude/skills/
-cp -R "$CC_SYSTEM/.claude/skills/ideation"            .claude/skills/
-cp -R "$CC_SYSTEM/.claude/skills/plan-and-build"      .claude/skills/
-cp -R "$CC_SYSTEM/.claude/skills/commit"              .claude/skills/
+cp -R "$CC_SYSTEM/skills/harness/persuasion-review"  .claude/skills/
+cp -R "$CC_SYSTEM/skills/harness/ideation"            .claude/skills/
+cp -R "$CC_SYSTEM/skills/harness/plan-and-build"      .claude/skills/
+cp -R "$CC_SYSTEM/skills/engineering/commit"              .claude/skills/
 
 # Sub-agent
-cp "$CC_SYSTEM/.claude/agents/tech-critic-lead.md"    .claude/agents/
+cp "$CC_SYSTEM/agents/tech-critic-lead.md"    .claude/agents/
 
 # Scripts (runner + 보조)
 cp "$CC_SYSTEM/scripts/run-server.py"                 scripts/

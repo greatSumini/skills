@@ -2,11 +2,11 @@
 
 > **쓰는 법.** 이 파일 전체 내용을 복사해서 타겟 프로젝트에서 열린 Claude Code 세션에 프롬프트로 붙여넣으면 된다. Claude는 아래 절차대로 [`vibemafiaclub/vooster`](https://github.com/vibemafiaclub/vooster) 의 **findings → cycles → goals (FCG)** 자율 빌드 하네스를 (스택 중립 버전으로) 타겟 프로젝트에 이식한다.
 >
-> 이 시스템은 루핑 에이전트(codex / Claude)가 사람 개입 없이 매 iteration 동일한 루프 — `diagnose → next-task → TDD → active-check → completion-check` — 를 돌며 미션을 완수하게 한다. 원본 자산은 [`greatSumini/cc-system`](https://github.com/greatSumini/cc-system) 의 `findings-cycles-goals/` 디렉토리에 있고, 이 프롬프트가 그걸 복사해온다. cc-system 쪽은 절대 수정하지 않는다.
+> 이 시스템은 루핑 에이전트(codex / Claude)가 사람 개입 없이 매 iteration 동일한 루프 — `diagnose → next-task → TDD → active-check → completion-check` — 를 돌며 미션을 완수하게 한다. 원본 자산은 [`greatSumini/skills`](https://github.com/greatSumini/skills) 의 `findings-cycles-goals/` 디렉토리에 있고, 이 프롬프트가 그걸 복사해온다. cc-system 쪽은 절대 수정하지 않는다.
 
 ---
 
-너(Claude)는 지금 타겟 프로젝트의 레포 루트에서 실행 중이다. 아래 절차를 **순서대로** 수행해라. 먼저 [`greatSumini/cc-system`](https://github.com/greatSumini/cc-system) 의 `findings-cycles-goals/` 디렉토리에 들어있는 설계·규약 문서(`docs/goal-design.md`, `guidelines/goal-iteration.md`, 각 `AGENTS.md`)를 **읽고 이 시스템을 이해한 뒤** 작업한다 — 기계적 복사만 하지 말 것.
+너(Claude)는 지금 타겟 프로젝트의 레포 루트에서 실행 중이다. 아래 절차를 **순서대로** 수행해라. 먼저 [`greatSumini/skills`](https://github.com/greatSumini/skills) 의 `findings-cycles-goals/` 디렉토리에 들어있는 설계·규약 문서(`docs/goal-design.md`, `guidelines/goal-iteration.md`, 각 `AGENTS.md`)를 **읽고 이 시스템을 이해한 뒤** 작업한다 — 기계적 복사만 하지 말 것.
 
 ---
 
@@ -26,7 +26,7 @@ ls scripts/completion-check.sh goals guidelines cycles docs/findings docs/goal-d
 
 ```bash
 CC_SYSTEM=$(mktemp -d)/cc-system
-git clone --depth=1 https://github.com/greatSumini/cc-system.git "$CC_SYSTEM"
+git clone --depth=1 https://github.com/greatSumini/skills.git "$CC_SYSTEM"
 KIT="$CC_SYSTEM/findings-cycles-goals"
 test -d "$KIT" || { echo "kit 디렉토리 없음 — cc-system 구조 확인"; exit 1; }
 ```
