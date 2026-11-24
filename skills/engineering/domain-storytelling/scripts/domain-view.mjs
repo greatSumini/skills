@@ -4,10 +4,10 @@
 //   node <skill-dir>/scripts/domain-view.mjs [docs/DOMAIN.md] [--out 파일.html] [--no-open] [--check] [--status]
 //
 // 표기 (번호 문장 안에서만 읽는다)
-//   [역할]     — 일을 하는 사람. 배경 초록
+//   [행위자]   — 일을 하는 사람. 배경 초록 (「용어」 구분에 옛 이름 "역할"도 받는다)
 //   {엔티티}   — 하나하나 구별해서 추적하는 대상. 배경 노랑
 //   (값객체)   — 값이 같으면 같은 것으로 보는 대상(기간·금액·요건). 배경 보라
-//   <행동>     — 역할이 하는 일. 글자 파랑
+//   <행동>     — 행위자가 하는 일. 글자 파랑
 //
 // 문장 끝에 `— 확인 전`이 붙은 문장(다른 문서에서 옮겨 와 아직 당사자가 확인하지 않은 것)은 점선으로 따로 보인다.
 // 문장 끝 `— 전해 들음`(사용자가 다른 등장인물의 일을 전한 것), `— AI 추측`(에이전트 추측에 사용자가 동의만 한 것)은 개수를 센다.
@@ -27,7 +27,7 @@ const input = resolve(args.find((a, i) => !a.startsWith("--") && args[i - 1] !==
 const out = resolve(opt("--out") ?? join(tmpdir(), `${basename(input, ".md")}-view.html`));
 
 const KINDS = {
-  "[": { close: "]", kind: "역할", cls: "role" },
+  "[": { close: "]", kind: "행위자", cls: "role" },
   "{": { close: "}", kind: "엔티티", cls: "entity" },
   "(": { close: ")", kind: "값객체", cls: "value" },
   "<": { close: ">", kind: "행동", cls: "action" },
@@ -139,10 +139,10 @@ function render(md) {
       if (section.startsWith("장면 목록") && sceneCol >= 0) for (const r of body) if (r[sceneCol]) scenes.push(r[sceneCol]);
       if (section.startsWith("불편함")) pains += body.filter((r) => /^P\d+/.test(r[0] ?? "")).length;
       if (section.startsWith("사례")) cases += body.filter((r) => /^C\d+/.test(r[0] ?? "")).length;
-      const cls = { 역할: "role", 엔티티: "entity", 값객체: "value" };
+      const cls = { 행위자: "role", 역할: "role", 엔티티: "entity", 값객체: "value" };
       let t = `<table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>`;
       for (const r of body) {
-        if (isGlossary && r[termCol]) glossary.set(r[termCol], kindCol >= 0 ? r[kindCol] ?? "" : "");
+        if (isGlossary && r[termCol]) glossary.set(r[termCol], kindCol >= 0 ? (r[kindCol] === "역할" ? "행위자" : r[kindCol] ?? "") : "");
         t += "<tr>";
         r.forEach((c, ci) => {
           const k = isGlossary && ci === termCol && kindCol >= 0 ? cls[r[kindCol]] : undefined;
@@ -168,7 +168,7 @@ function render(md) {
           if (!uses.has(f.word)) uses.set(f.word, new Set());
           uses.get(f.word).add(f.kind);
         }
-        if (!found.some((f) => f.kind === "역할")) ctx.warn(`[역할]이 없는 문장: ${ol[1]}. ${ol[2]}`);
+        if (!found.some((f) => f.kind === "행위자")) ctx.warn(`[행위자]가 없는 문장: ${ol[1]}. ${ol[2]}`);
         if (!found.some((f) => f.kind === "행동")) ctx.warn(`<행동>이 없는 문장: ${ol[1]}. ${ol[2]}`);
         if (asis.has(section)) asis.set(section, asis.get(section) + 1);
         const unconfirmed = /—\s*확인 전/.test(ol[2]);
@@ -273,8 +273,8 @@ const page = `<!doctype html>
   .warn li { margin: 2px 0; }
 </style></head><body>
 <div class="panel">
-  <p><span class="role">역할</span> <code>[ ]</code> &nbsp; <span class="entity">엔티티</span> <code>{ }</code> &nbsp; <span class="value">값객체</span> <code>( )</code> &nbsp; <span class="action">행동</span> <code>&lt; &gt;</code></p>
-  <p>역할 ${count("역할").length}: ${chips("역할", "role")}</p>
+  <p><span class="role">행위자</span> <code>[ ]</code> &nbsp; <span class="entity">엔티티</span> <code>{ }</code> &nbsp; <span class="value">값객체</span> <code>( )</code> &nbsp; <span class="action">행동</span> <code>&lt; &gt;</code></p>
+  <p>행위자 ${count("행위자").length}: ${chips("행위자", "role")}</p>
   <p>엔티티 ${count("엔티티").length}: ${chips("엔티티", "entity")}</p>
   <p>값객체 ${count("값객체").length}: ${chips("값객체", "value")}</p>
   <p>행동 ${count("행동").length}: ${chips("행동", "action")}</p>
