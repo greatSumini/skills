@@ -52,6 +52,7 @@ git clone https://github.com/greatSumini/skills ~/repos/greatSumini/skills
 
 - **[commit](./skills/engineering/commit/SKILL.md)**: 대화 맥락을 근거로 변경을 의미 단위로 나눠 커밋하고 push 한다. `HARNESS_HEADLESS=1` 무인 모드를 지원한다.
 - **[ship](./skills/engineering/ship/SKILL.md)**: 커밋 → push → PR 생성 → squash merge 를 한 번에 한다.
+- **[domain-storytelling](./skills/engineering/domain-storytelling/SKILL.md)**: 기획 전에 AI가 나를 인터뷰해 업무 흐름·문제·해결 범위를 `docs/DOMAIN.md`로 남기는 도메인 스토리텔링 워크숍.
 
 ### Productivity
 
