@@ -99,7 +99,7 @@ const line = (x1, y1, x2, y2, o = {}) => els.push(base({
 function belowLines(n) {
   const out = [];
   const tech = [n.stack, n.deploy].filter(Boolean).join(", ");
-  if ((n.zone !== "external" || (n.to ?? []).length) && tech) out.push(tech);
+  if (tech) out.push(tech); // 스택·배포 위치는 모든 칸에서 상자 아래에 둔다
   for (const r of n.risks ?? []) out.push(`⚠ ${r}`);
   return out;
 }
@@ -116,8 +116,6 @@ for (const n of nodes) {
   const label = [n.name, n.note].filter(Boolean).join("\n");
   const size = 26, lines = label.split("\n").length;
   text(x + W / 2, y + H / 2 - (lines * size * 1.25) / 2, label, { fontSize: size });
-  const tech = [n.stack, n.deploy].filter(Boolean).join(", ");
-  if (n.zone === "external" && !(n.to ?? []).length && tech) text(x + W + 30, y + H / 2 - 16, tech, { fontSize: 26, align: "left" });
   let by = y + H + 16;
   for (const l of belowLines(n)) {
     const risk = l.startsWith("⚠");
@@ -180,7 +178,7 @@ console.log(`${outBase}.excalidraw\n${outBase}.html`);
 if (flag("--png")) {
   const chrome = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "google-chrome", "chromium"].find((c) => c.startsWith("/") ? existsSync(c) : true);
   const prof = mkdtempSync(join(tmpdir(), "infra-chrome-"));
-  const w = Math.max(...els.map((e) => e.x + (e.width || 0))) + 120, h = Math.max(...els.map((e) => e.y + (e.height || 0))) + 400;
+  const w = Math.max(...els.map((e) => e.x + (e.width || 0))) + 120, h = Math.max(...els.map((e) => e.y + (e.height || 0))) + 1500; // 넉넉히 찍고 아래 빈 곳은 magick -trim 으로 자른다
   try {
     execFileSync(chrome, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1", `--window-size=${Math.round(w)},${Math.round(h)}`,
       "--virtual-time-budget=20000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html`], { stdio: "ignore", timeout: 90000 });
