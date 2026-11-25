@@ -10,7 +10,7 @@
       "name": "matfia",
       "source": "./",
       "displayName": "Matfia",
-      "version": "2.0.1",
+      "version": "2.1.0",
       "description": "바이브마피아클럽 Claude Code 플러그인 — 도메인 스토리텔링·인프라 맵 skill과 마피아MCP(판단 카드 MCP, 로그인 연결, 하루 10회 무료).",
       "author": {
         "name": "Sumin Choi",
@@ -58,7 +58,7 @@
       "name": "greatsumini-skills",
       "source": "./",
       "strict": false,
-      "version": "0.5.1",
+      "version": "0.5.2",
       "description": "(옛 이름) matfia로 옮겨 주세요 — claude plugin install matfia@matfia",
       "skills": [
         "./skills/engineering/domain-storytelling",

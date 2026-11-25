@@ -137,7 +137,7 @@ for (const x of [(COLX[0] + W + COLX[1]) / 2, (COLX[1] + W + COLX[2]) / 2]) line
 
 // 노드
 for (const n of nodes) {
-  const { x, y, h } = pos.get(n.name);
+  const { x, y, h } = pos.get(n.name), first = els.length;
   els.push(base({ type: "rectangle", x, y, width: W, height: h, roundness: { type: 3 } }));
   const inline = n.zone === "external";
   const label = inline ? [n.name + (n.deploy && n.deploy !== n.name ? ` · ${n.deploy}` : ""), (n.note ?? "").replace(/\n/g, " ")].filter(Boolean).join("\n") : [n.name, n.note].filter(Boolean).join("\n");
@@ -149,6 +149,7 @@ for (const n of nodes) {
     text(x + W / 2, by, l, { fontSize: risk ? 20 : 24, color: risk ? "#e03131" : "#1e1e1e" });
     by += 30;
   }
+  for (const e of els.slice(first)) e.customData = { node: n.name }; // html 단계 보기에서 이 단계에 안 쓰는 노드를 옅게
 }
 
 // 연결 — 경계점 사이에 긋는다. client→server 는 화살촉 없이(손그림 지도와 같게)
@@ -210,6 +211,7 @@ if (!req) {
   const seen = new Map();
   for (const [i, s] of req.steps.entries()) {
     if (!byName.has(s.from) || !byName.has(s.to)) continue;
+    const first = els.length; // 이 단계에서 만든 요소에 단계 번호를 단다(html 단계 보기용)
     const key = [s.from, s.to].sort().join("|");
     const k = seen.get(key) ?? 0; seen.set(key, k + 1);
     const off = k === 0 ? -20 : 20 + (k - 1) * 40; // 같은 두 노드 사이 여러 단계는 위아래로 벌린다
@@ -221,10 +223,13 @@ if (!req) {
     const mx = x1 + (x2 - x1) * t, my = y1 + (y2 - y1) * t;
     els.push(base({ type: "ellipse", x: mx - 17, y: my - 17, width: 34, height: 34, strokeColor: "#e03131", backgroundColor: "#ffffff" }));
     text(mx, my - 13, String(i + 1), { fontSize: 20, color: "#e03131" });
+    for (const e of els.slice(first)) e.customData = { step: i + 1 };
   }
-  // 범례: 단계 설명
+  // 범례: 단계 설명 (html 단계 보기에서는 숨기고 위쪽 한 줄로 보인다)
+  const legendFrom = els.length;
   text(COLX[0] - 40, bottom + 30, req.name ?? "요청", { fontSize: 28, align: "left", color: "#e03131" });
   req.steps.forEach((s, i) => text(COLX[0] - 40, bottom + 80 + i * 34, `${i + 1}. ${s.from} → ${s.to}: ${s.label ?? ""}`, { fontSize: 22, align: "left" }));
+  for (const e of els.slice(legendFrom)) e.customData = { legend: true };
 }
 
 const scene = { type: "excalidraw", version: 2, source: "infra-map", elements: els, appState: { viewBackgroundColor: "#ffffff", gridSize: null }, files: {} };
@@ -245,7 +250,13 @@ const roundRect = (x, y, w, h, r = 22) => [0, 1].map(() =>
   `M${j(x + r)} ${j(y)} L${j(x + w - r)} ${j(y)} Q${x + w} ${y} ${j(x + w)} ${j(y + r)} L${j(x + w)} ${j(y + h - r)} Q${x + w} ${y + h} ${j(x + w - r)} ${j(y + h)} L${j(x + r)} ${j(y + h)} Q${x} ${y + h} ${j(x)} ${j(y + h - r)} L${j(x)} ${j(y + r)} Q${x} ${y} ${j(x + r)} ${j(y)}`).join(" ");
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const svgParts = [];
+const tag = (e) => { const c = e.customData ?? {}; return c.step ? ` data-step="${c.step}"` : c.node ? ` data-node="${esc(c.node)}"` : c.legend ? " data-legend" : ""; };
 for (const e of els) {
+  const at = svgParts.length;
+  draw(e);
+  if (svgParts.length > at && tag(e)) svgParts[at] = `<g${tag(e)}>${svgParts[at]}</g>`;
+}
+function draw(e) {
   const st = `stroke="${e.strokeColor}" stroke-width="${e.strokeWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
   if (e.type === "rectangle") svgParts.push(`<path d="${roundRect(e.x, e.y, e.width, e.height)}" ${st}/>`);
   else if (e.type === "ellipse") svgParts.push(`<ellipse cx="${e.x + e.width / 2}" cy="${e.y + e.height / 2}" rx="${e.width / 2}" ry="${e.height / 2}" fill="${e.backgroundColor}" stroke="none"/>` +
@@ -253,7 +264,7 @@ for (const e of els) {
   else if (e.type === "arrow") {
     const P = e.points.map(([px, py]) => [e.x + px, e.y + py]);
     const [x1, y1] = P.at(-2), [x2, y2] = P.at(-1);
-    if (e.strokeStyle === "dashed") { svgParts.push(`<path d="${stroke1(P[0][0], P[0][1], x2, y2)}" ${st} stroke-dasharray="10 10"/>`); continue; }
+    if (e.strokeStyle === "dashed") { svgParts.push(`<path d="${stroke1(P[0][0], P[0][1], x2, y2)}" ${st} stroke-dasharray="10 10"/>`); return; }
     let d = P.slice(1).map((q, i) => rough(P[i][0], P[i][1], q[0], q[1])).join(" ");
     if (e.endArrowhead) {
       const a = Math.atan2(y2 - y1, x2 - x1);
@@ -276,9 +287,33 @@ text{font-family:Hand,HandKo,sans-serif}</style>
 <rect x="${minX}" y="${minY}" width="100%" height="100%" fill="#fff"/>
 ${svgParts.join("\n")}
 </svg>`;
+// 리퀘스트 맵 html 은 단계 보기로 연다 — 한 번에 선 하나와 설명 한 줄만. ←/→(또는 화면 오른쪽·왼쪽 탭)로 이동, 0단계 = 전체.
+// 주소 끝 #숫자 로 그 단계를 바로 연다 — #0 은 전체 보기(png 는 이걸 찍는다)
+const stepper = !req ? "" : `
+<div id="cap"></div>
+<style>#cap{position:sticky;top:0;z-index:1;background:#fff;border-bottom:2px solid #e03131;padding:14px 20px;font:26px Hand,HandKo,sans-serif;color:#1e1e1e}
+#cap b{color:#e03131;margin-right:12px}#cap small{color:#868e96;font-size:18px;margin-left:12px}
+body.one [data-step],body.one [data-legend]{display:none}body.one [data-step].on{display:inline}
+body.one [data-node]{opacity:.25}body.one [data-node].on{opacity:1}body.one [data-node].on path{stroke:#1e1e1e;stroke-width:3}</style>
+<script>
+const S = ${JSON.stringify(req.steps.map((s) => ({ from: s.from, to: s.to, label: s.label ?? "" }))).replace(/</g, "\\u003c")}, N = S.length, title = ${JSON.stringify(req.name ?? "요청").replace(/</g, "\\u003c")};
+let i = /^#\\d+$/.test(location.hash) ? Math.min(N, +location.hash.slice(1)) : 1;
+const cap = document.getElementById("cap"), t = (s) => { const d = document.createElement("span"); d.textContent = s; return d.innerHTML; };
+function show() {
+  document.body.classList.toggle("one", i > 0);
+  document.querySelectorAll("[data-step]").forEach((g) => g.classList.toggle("on", +g.dataset.step === i));
+  const s = S[i - 1];
+  document.querySelectorAll("[data-node]").forEach((g) => g.classList.toggle("on", !!s && (g.dataset.node === s.from || g.dataset.node === s.to)));
+  cap.innerHTML = i ? "<b>" + i + " / " + N + "</b>" + t(s.from + " → " + s.to + ": " + s.label) + "<small>← →</small>" : "<b>" + t(title) + "</b>전체 " + N + "단계<small>→ 로 한 단계씩</small>";
+}
+addEventListener("keydown", (e) => { if (e.key === "ArrowRight" || e.key === " ") i = Math.min(N, i + 1); else if (e.key === "ArrowLeft") i = Math.max(0, i - 1); else return; e.preventDefault(); show(); });
+addEventListener("click", (e) => { i = e.clientX > innerWidth / 2 ? Math.min(N, i + 1) : Math.max(0, i - 1); show(); });
+addEventListener("DOMContentLoaded", show);
+if (location.search.includes("print")) cap.style.display = "none"; // png 는 전체 그림만 찍는다
+</script>`;
 const html = `<!doctype html><meta charset="utf-8"><title>${basename(outBase)}</title>
 <style>body{margin:0;background:#fff}svg{display:block;max-width:100%;height:auto}</style>
-${svg}`;
+${stepper}${svg}`;
 writeFileSync(`${outBase}.html`, html);
 console.log(`${outBase}.excalidraw\n${outBase}.html`);
 
@@ -288,7 +323,7 @@ if (flag("--png")) {
   const w = maxX - minX, h = maxY - minY;
   try {
     execFileSync(chrome, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1", `--window-size=${Math.round(w)},${Math.round(h)}`,
-      "--virtual-time-budget=3000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html`], { stdio: "ignore", timeout: 90000 });
+      "--virtual-time-budget=3000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html?print#0`], { stdio: "ignore", timeout: 90000 });
     console.log(`${outBase}.png`);
   } catch { console.error("png 실패 — html 을 브라우저로 열어 확인한다"); }
   rmSync(prof, { recursive: true, force: true });
