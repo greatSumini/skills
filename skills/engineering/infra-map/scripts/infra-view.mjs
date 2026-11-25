@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // docs/infra-map.json 을 손그림 지도로 그린다. 리퀘스트 플로우(요청 하나가 지나가는 길)을 겹쳐 그릴 수도 있다. 의존성 없음.
 //
-//   node <skill-dir>/scripts/infra-view.mjs [docs/infra-map.json] [--flow 요청.json] [--out 파일] [--png] [--no-open] [--check]
+//   node <skill-dir>/scripts/infra-view.mjs [docs/infra-map.json] [--flow 요청.json] [--out 파일] [--png] [--theme light|dark] [--no-open] [--check]
 //
 // 만드는 것 (--out 을 안 주면 임시 폴더)
 //   <이름>.excalidraw  — excalidraw.com 에 끌어다 놓으면 그대로 열리고 고칠 수 있다
@@ -18,7 +18,7 @@ import { execFile, execFileSync } from "node:child_process";
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const opt = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
-const valued = new Set(["--out", "--flow", "--request"]);
+const valued = new Set(["--out", "--flow", "--request", "--theme"]);
 const input = resolve(args.find((a, i) => !a.startsWith("--") && !valued.has(args[i - 1])) ?? "docs/infra-map.json");
 if (!existsSync(input)) {
   console.error(`없음: ${input} — <skill-dir>/templates/infra-map.json 을 복사해 시작한다`);
@@ -279,6 +279,9 @@ const rough = (x1, y1, x2, y2) => stroke1(x1, y1, x2, y2) + " " + stroke1(x1, y1
 const roundRect = (x, y, w, h, r = 22) => [0, 1].map(() =>
   `M${j(x + r)} ${j(y)} L${j(x + w - r)} ${j(y)} Q${x + w} ${y} ${j(x + w)} ${j(y + r)} L${j(x + w)} ${j(y + h - r)} Q${x + w} ${y + h} ${j(x + w - r)} ${j(y + h)} L${j(x + r)} ${j(y + h)} Q${x} ${y + h} ${j(x)} ${j(y + h - r)} L${j(x)} ${j(y + r)} Q${x} ${y} ${j(x + r)} ${j(y)}`).join(" ");
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// 색은 CSS 변수로 쓴다 — html 은 보는 사람 시스템의 라이트·다크 설정을 따른다
+const PALETTE = { "#1e1e1e": "--ink", "#e03131": "--red", "#868e96": "--muted", "#ffffff": "--bg", "#fff": "--bg" };
+const v = (c) => (PALETTE[c] ? `var(${PALETTE[c]})` : c);
 const svgParts = [];
 const tag = (e) => { const c = e.customData ?? {}; return c.step ? ` data-step="${c.step}"` : c.node ? ` data-node="${esc(c.node)}"` : c.legend ? " data-legend" : ""; };
 for (const e of els) {
@@ -287,9 +290,9 @@ for (const e of els) {
   if (svgParts.length > at && tag(e)) svgParts[at] = `<g${tag(e)}>${svgParts[at]}</g>`;
 }
 function draw(e) {
-  const st = `stroke="${e.strokeColor}" stroke-width="${e.strokeWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
+  const st = `style="stroke:${v(e.strokeColor)}" stroke-width="${e.strokeWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
   if (e.type === "rectangle") svgParts.push(`<path d="${roundRect(e.x, e.y, e.width, e.height)}" ${st}/>`);
-  else if (e.type === "ellipse") svgParts.push(`<ellipse cx="${e.x + e.width / 2}" cy="${e.y + e.height / 2}" rx="${e.width / 2}" ry="${e.height / 2}" fill="${e.backgroundColor}" stroke="none"/>` +
+  else if (e.type === "ellipse") svgParts.push(`<ellipse cx="${e.x + e.width / 2}" cy="${e.y + e.height / 2}" rx="${e.width / 2}" ry="${e.height / 2}" style="fill:${v(e.backgroundColor)}" stroke="none"/>` +
     [0, 1].map(() => `<ellipse cx="${j(e.x + e.width / 2)}" cy="${j(e.y + e.height / 2)}" rx="${e.width / 2 + rnd()}" ry="${e.height / 2 + rnd()}" ${st}/>`).join(""));
   else if (e.type === "arrow") {
     const P = e.points.map(([px, py]) => [e.x + px, e.y + py]);
@@ -304,7 +307,7 @@ function draw(e) {
   } else if (e.type === "text") {
     const anchor = e.textAlign === "left" ? "start" : "middle", x = e.textAlign === "left" ? e.x : e.x + e.width / 2;
     const lines = e.text.split("\n").map((l, i) => `<tspan x="${x}" dy="${i ? e.fontSize * 1.25 : e.fontSize}">${esc(l)}</tspan>`).join("");
-    svgParts.push(`<text y="${e.y}" font-size="${e.fontSize}" text-anchor="${anchor}" fill="${e.strokeColor}">${lines}</text>`);
+    svgParts.push(`<text y="${e.y}" font-size="${e.fontSize}" text-anchor="${anchor}" style="fill:${v(e.strokeColor)}">${lines}</text>`);
   }
 }
 const minX = Math.min(...els.map((e) => e.x)) - 40, minY = Math.min(...els.map((e) => e.y)) - 40;
@@ -314,17 +317,17 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${
 <style>@font-face{font-family:Hand;src:url(data:font/woff2;base64,${font("Excalifont-Regular.woff2")}) format("woff2")}
 @font-face{font-family:HandKo;src:url(data:font/woff2;base64,${font("Gaegu-Bold-ko.woff2")}) format("woff2");size-adjust:128%}
 text{font-family:Hand,HandKo,sans-serif}</style>
-<rect x="${minX}" y="${minY}" width="100%" height="100%" fill="#fff"/>
+<rect x="${minX}" y="${minY}" width="100%" height="100%" style="fill:var(--bg)"/>
 ${svgParts.join("\n")}
 </svg>`;
 // 리퀘스트 플로우 html 은 단계 보기로 연다 — 한 번에 선 하나와 설명 한 줄만. ←/→(또는 화면 오른쪽·왼쪽 탭)로 이동, 0단계 = 전체.
 // 주소 끝 #숫자 로 그 단계를 바로 연다 — #0 은 전체 보기(png 는 이걸 찍는다)
 const stepper = !req ? "" : `
 <div id="cap"></div>
-<style>#cap{position:sticky;top:0;z-index:1;background:#fff;border-bottom:2px solid #e03131;padding:14px 20px;font:26px Hand,HandKo,sans-serif;color:#1e1e1e}
-#cap b{color:#e03131;margin-right:12px}#cap small{color:#868e96;font-size:18px;margin-left:12px}
+<style>#cap{position:sticky;top:0;z-index:1;background:var(--bg);border-bottom:2px solid var(--red);padding:14px 20px;font:26px Hand,HandKo,sans-serif;color:var(--ink)}
+#cap b{color:var(--red);margin-right:12px}#cap small{color:var(--muted);font-size:18px;margin-left:12px}
 body.one [data-step],body.one [data-legend]{display:none}body.one [data-step].on{display:inline}
-body.one [data-node]{opacity:.25}body.one [data-node].on{opacity:1}body.one [data-node].on path{stroke:#1e1e1e;stroke-width:3}</style>
+body.one [data-node]{opacity:.25}body.one [data-node].on{opacity:1}body.one [data-node].on path{stroke:var(--ink)!important;stroke-width:3}</style>
 <script>
 const S = ${JSON.stringify(req.steps.map((s) => ({ from: s.from, to: s.to, label: s.label ?? "" }))).replace(/</g, "\\u003c")}, N = S.length, title = ${JSON.stringify(req.name ?? "요청").replace(/</g, "\\u003c")};
 let i = /^#\\d+$/.test(location.hash) ? Math.min(N, +location.hash.slice(1)) : 1;
@@ -341,8 +344,13 @@ addEventListener("click", (e) => { i = e.clientX > innerWidth / 2 ? Math.min(N, 
 addEventListener("DOMContentLoaded", show);
 if (location.search.includes("print")) cap.style.display = "none"; // png 는 전체 그림만 찍는다
 </script>`;
+// 라이트·다크: 기본은 보는 사람 시스템 설정. 주소에 ?theme=dark|light 를 붙이면 그걸로 고정한다(png 가 쓴다)
+const DARK = "--bg:#121212;--ink:#e3e3e3;--red:#ff6b6b;--muted:#7d858c;color-scheme:dark";
 const html = `<!doctype html><meta charset="utf-8"><title>${basename(outBase)}</title>
-<style>body{margin:0;background:#fff}svg{display:block;max-width:100%;height:auto}</style>
+<script>const q = new URLSearchParams(location.search).get("theme"); if (q) document.documentElement.dataset.theme = q;</script>
+<style>:root{--bg:#fff;--ink:#1e1e1e;--red:#e03131;--muted:#868e96;color-scheme:light}
+:root[data-theme=dark]{${DARK}}@media (prefers-color-scheme:dark){:root:not([data-theme=light]){${DARK}}}
+body{margin:0;background:var(--bg)}svg{display:block;max-width:100%;height:auto}</style>
 ${stepper}${svg}`;
 writeFileSync(`${outBase}.html`, html);
 console.log(`${outBase}.excalidraw\n${outBase}.html`);
@@ -351,9 +359,11 @@ if (flag("--png")) {
   const chrome = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "google-chrome", "chromium"].find((c) => c.startsWith("/") ? existsSync(c) : true);
   const prof = mkdtempSync(join(tmpdir(), "infra-chrome-"));
   const w = maxX - minX, h = maxY - minY;
+  // png 는 한 장이라 찍는 순간의 테마로 고정된다: --theme 을 주지 않으면 이 컴퓨터(macOS) 화면 모드를 따른다
+  const theme = opt("--theme") ?? (() => { try { return /dark/i.test(execFileSync("defaults", ["read", "-g", "AppleInterfaceStyle"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })) ? "dark" : "light"; } catch { return "light"; } })();
   try {
     execFileSync(chrome, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1", `--window-size=${Math.round(w)},${Math.round(h)}`,
-      "--virtual-time-budget=3000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html?print#0`], { stdio: "ignore", timeout: 90000 });
+      "--virtual-time-budget=3000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html?print&theme=${theme}#0`], { stdio: "ignore", timeout: 90000 });
     console.log(`${outBase}.png`);
   } catch { console.error("png 실패 — html 을 브라우저로 열어 확인한다"); }
   rmSync(prof, { recursive: true, force: true });

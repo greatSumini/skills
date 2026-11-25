@@ -76,4 +76,5 @@ node <skill-dir>/scripts/infra-view.mjs docs/infra-map.json --check             
 - 리퀘스트 플로우 html은 **단계 보기**로 열린다 — 한 번에 선 하나와 설명 한 줄만 보이고, 그 단계의 두 노드만 진하게 남는다. ←/→(폰은 화면 오른쪽·왼쪽 탭)로 이동하고 0단계는 전체 보기다. 주소 끝 `#3`처럼 단계를 붙이면 그 단계로 바로 열린다. png는 전체 보기로 찍힌다.
 - `.excalidraw`·`.html`을 임시 폴더에 만들고 html을 브라우저로 연다. `.excalidraw`는 excalidraw.com에 끌어다 놓으면 그대로 열려서 손으로 고칠 수 있다.
 - `--png`면 크롬 헤드리스로 PNG까지 찍는다(문서·노트에 붙일 때). `--out 경로`로 저장 위치를 정한다.
+- 라이트·다크: html은 보는 사람 시스템 설정을 따른다(주소에 `?theme=dark`·`?theme=light`로 고정할 수 있다). png는 한 장이라 찍는 순간 이 컴퓨터(macOS) 화면 모드로 찍히고, `--theme light|dark`로 정할 수 있다. `.excalidraw`는 excalidraw.com의 자체 다크 모드를 쓴다.
 - 의존성이 없다. 손그림 선은 스크립트가 직접 그리고, 글씨체는 `<skill-dir>/fonts/`의 손글씨 폰트(Excalifont·Gaegu, OFL)를 싣는다. 인터넷·npm 설치가 필요 없다.
