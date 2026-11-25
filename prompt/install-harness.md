@@ -42,10 +42,10 @@ mkdir -p .claude/skills .claude/agents scripts prompts
 cp -R "$CC_SYSTEM/skills/harness/persuasion-review"  .claude/skills/
 cp -R "$CC_SYSTEM/skills/harness/ideation"            .claude/skills/
 cp -R "$CC_SYSTEM/skills/harness/plan-and-build"      .claude/skills/
-cp -R "$CC_SYSTEM/skills/engineering/commit"              .claude/skills/
+cp -R "$CC_SYSTEM/skills/harness/commit"                  .claude/skills/
 
 # Sub-agent
-cp "$CC_SYSTEM/agents/tech-critic-lead.md"    .claude/agents/
+cp "$CC_SYSTEM/skills/harness/agents/tech-critic-lead.md"    .claude/agents/
 
 # Scripts (runner + 보조)
 cp "$CC_SYSTEM/scripts/run-server.py"                 scripts/

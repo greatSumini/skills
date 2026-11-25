@@ -1,6 +1,6 @@
 # Matfia skills
 
-매일 쓰는 Claude Code skill · sub-agent · 하네스 자산 모음. 작고 고치기 쉽게 만들고, 필요한 조각만 골라 쓴다.
+유튜브에서 소개한 Claude Code skill과 하네스 자산 모음. 작고 고치기 쉽게 만들고, 필요한 조각만 골라 쓴다.
 
 ## 설치 (30초)
 
@@ -14,7 +14,7 @@ claude plugin marketplace add greatSumini/skills
 claude plugin install matfia@matfia
 ```
 
-skill은 `/matfia:commit`, `/matfia:infra-map`처럼 플러그인 이름이 앞에 붙는다. 업데이트: `claude plugin marketplace update matfia`
+skill은 `/matfia:domain-storytelling`, `/matfia:infra-map`처럼 플러그인 이름이 앞에 붙는다. 업데이트: `claude plugin marketplace update matfia`
 
 마피아MCP(판단 카드 MCP, 하루 10회 무료) 연결도 같이 들어 있다. 다시 켠 뒤 `/mcp`에서 matfia-brain 로그인을 하면 쓸 수 있다.
 
@@ -53,33 +53,8 @@ git clone https://github.com/greatSumini/skills ~/repos/greatSumini/skills
 
 ### Engineering
 
-코드 작업에 매일 쓰는 skill.
-
-- **[commit](./skills/engineering/commit/SKILL.md)**: 대화 맥락을 근거로 변경을 의미 단위로 나눠 커밋하고 push 한다. `HARNESS_HEADLESS=1` 무인 모드를 지원한다.
-- **[ship](./skills/engineering/ship/SKILL.md)**: 커밋 → push → PR 생성 → squash merge 를 한 번에 한다.
 - **[domain-storytelling](./skills/engineering/domain-storytelling/SKILL.md)**: 기획 전에 AI가 나를 인터뷰해 업무 흐름·문제·해결 범위를 `docs/DOMAIN.md`로 남기는 도메인 스토리텔링 워크숍.
 - **[infra-map](./skills/engineering/infra-map/SKILL.md)**: 클라이언트·서버·외부 제공자 칸의 인프라 지도를 `docs/infra-map.json`으로 관리하고, 기능 하나의 요청이 지나가는 길(리퀘스트 맵)을 손그림 지도로 그린다(의존성 없음).
-
-### Productivity
-
-코드 밖 업무 도구.
-
-- **[gmail](./skills/productivity/gmail/SKILL.md)**: gogcli 로 Gmail 을 검색·조회·발송한다.
-- **[google-calendar](./skills/productivity/google-calendar/SKILL.md)**: gogcli 로 Google Calendar 일정을 조회·생성·수정·삭제한다.
-- **[email-draft](./skills/productivity/email-draft/SKILL.md)**: 비즈니스 메일·답장 초안을 쓸 때의 글쓰기 매너.
-- **[transcribe](./skills/productivity/transcribe/SKILL.md)**: 로컬 오디오 파일(m4a 등)을 한국어로 전사한다.
-- **[youtube-collector](./skills/productivity/youtube-collector/SKILL.md)**: 유튜브 채널을 등록하고 새 영상을 모아 자막 기반 요약을 만든다.
-- **[discord-message](./skills/productivity/discord-message/SKILL.md)**: Discord 봇으로 나에게 DM 을 보낸다.
-
-### Claude Code
-
-Claude Code 자산을 만들고 사용 이력을 분석하는 도구.
-
-- **[skill-creator](./skills/claude-code/skill-creator/SKILL.md)**: 새 skill 을 설계·생성·패키징한다.
-- **[slash-command-creator](./skills/claude-code/slash-command-creator/SKILL.md)**: slash command 를 만든다.
-- **[subagent-creator](./skills/claude-code/subagent-creator/SKILL.md)**: 전용 sub-agent 를 만든다.
-- **[hook-creator](./skills/claude-code/hook-creator/SKILL.md)**: Claude Code hook 을 만들고 설정한다.
-- **[cc-usage-audit](./skills/claude-code/cc-usage-audit/SKILL.md)**: 한 프로젝트의 Claude Code 프롬프트 이력을 분석해 사용 패턴·개발 철학·개선점을 뽑는다.
 
 ### Harness (복사 설치, 플러그인 미포함)
 
@@ -87,21 +62,15 @@ Claude Code 자산을 만들고 사용 이력을 분석하는 도구.
 - **[ideation](./skills/harness/ideation/SKILL.md)**: 페르소나 시뮬 결과로 다음 요구사항 1개를 도출하고 `tech-critic-lead` 결재를 받는다.
 - **[persuasion-review](./skills/harness/persuasion-review/SKILL.md)**: 잠재고객 페르소나로 설득력을 다중 headless 세션으로 시뮬한다.
 - **[harness-starter](./skills/harness/harness-starter/SKILL.md)**: clarify → context-gather → plan → implement → verify 5단계 오케스트레이터.
-
-### Sub-agents
-
-플러그인 설치 시 같이 들어온다.
-
-- **[tech-critic-lead](./agents/tech-critic-lead.md)**: "기능은 비용" 전제의 비판적 CTO.
-- **[brand-logo-finder](./agents/brand-logo-finder.md)**: 브랜드 로고 파일을 찾아온다.
+- **[commit](./skills/harness/commit/SKILL.md)**: 변경을 의미 단위로 나눠 커밋·push 한다. 자율 주행 하네스가 쓴다.
+- **[tech-critic-lead](./skills/harness/agents/tech-critic-lead.md)** (sub-agent): "기능은 비용" 전제의 비판적 CTO. ideation·plan-and-build 결재용.
 
 ## 레포 구조
 
 ```
 skills/
-  engineering/ productivity/ claude-code/   플러그인에 들어가는 skill (bucket별 README.md)
-  harness/                                  복사 설치용 하네스 skill
-agents/                  sub-agent (플러그인에 포함)
+  engineering/   플러그인에 들어가는 skill (README.md)
+  harness/       복사 설치용 하네스 skill·sub-agent(agents/)
 .claude-plugin/          marketplace.json (플러그인 매니페스트 matfia + 옛 이름 별칭)
 scripts/
   link-skills.sh         심볼릭 링크 설치
@@ -127,8 +96,8 @@ skill 추가·이동 규칙은 [CLAUDE.md](./CLAUDE.md).
 
 복사 대상 (수동으로 체크하고 싶다면):
 
-- `skills/harness/{persuasion-review, ideation, plan-and-build}/`, `skills/engineering/commit/` → 타겟의 `.claude/skills/` (4개 skill 통째)
-- `agents/tech-critic-lead.md` → 타겟의 `.claude/agents/`
+- `skills/harness/{persuasion-review, ideation, plan-and-build, commit}/` → 타겟의 `.claude/skills/` (4개 skill 통째)
+- `skills/harness/agents/tech-critic-lead.md` → 타겟의 `.claude/agents/`
 - `scripts/run-server.py`, `scripts/run-phases.py`, `scripts/gen-docs-diff.py`, `scripts/_utils.py`
 - `prompts/task-create.md`
 

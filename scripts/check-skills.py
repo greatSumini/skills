@@ -2,7 +2,7 @@
 """레포 규약을 기계로 검사한다 (CLAUDE.md 참고). 의존성 없음.
 
 1. 모든 SKILL.md 에 frontmatter `name`·`description` 이 있고, name 이 폴더명과 같다.
-2. 배포 bucket(engineering·productivity·claude-code·matfia)의 skill 은 marketplace.json matfia 항목 `skills` 와
+2. 배포 bucket(engineering)의 skill 은 marketplace.json matfia 항목 `skills` 와
    최상위 README.md 와 bucket README.md 에 모두 있다. harness/ 는 거기 없어야 한다.
 3. 그 skills 경로가 실제로 있다.
 """
@@ -10,7 +10,7 @@ import json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PROMOTED = ["engineering", "productivity", "claude-code", "matfia"]
+PROMOTED = ["engineering"]
 NOT_SHIPPED = ["harness"]
 fail = []
 

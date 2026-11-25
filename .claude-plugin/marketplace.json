@@ -10,8 +10,8 @@
       "name": "matfia",
       "source": "./",
       "displayName": "Matfia",
-      "version": "1.2.0",
-      "description": "바이브마피아클럽 Claude Code skill 모음 + 마피아MCP. 커밋·출하, 도메인 스토리텔링·인프라 맵, Gmail·캘린더·전사, skill 제작 도구와 판단 카드 MCP(로그인 연결, 하루 10회 무료).",
+      "version": "2.0.0",
+      "description": "바이브마피아클럽 Claude Code 플러그인 — 도메인 스토리텔링·인프라 맵 skill과 마피아MCP(판단 카드 MCP, 로그인 연결, 하루 10회 무료).",
       "author": {
         "name": "Sumin Choi",
         "url": "https://github.com/greatSumini"
@@ -30,21 +30,8 @@
       "category": "productivity",
       "strict": false,
       "skills": [
-        "./skills/engineering/commit",
-        "./skills/engineering/ship",
         "./skills/engineering/domain-storytelling",
-        "./skills/engineering/infra-map",
-        "./skills/productivity/gmail",
-        "./skills/productivity/google-calendar",
-        "./skills/productivity/email-draft",
-        "./skills/productivity/transcribe",
-        "./skills/productivity/youtube-collector",
-        "./skills/productivity/discord-message",
-        "./skills/claude-code/skill-creator",
-        "./skills/claude-code/slash-command-creator",
-        "./skills/claude-code/subagent-creator",
-        "./skills/claude-code/hook-creator",
-        "./skills/claude-code/cc-usage-audit"
+        "./skills/engineering/infra-map"
       ],
       "hooks": {
         "SessionStart": [
@@ -71,24 +58,11 @@
       "name": "greatsumini-skills",
       "source": "./",
       "strict": false,
-      "version": "0.4.0",
+      "version": "0.5.0",
       "description": "(옛 이름) matfia로 옮겨 주세요 — claude plugin install matfia@matfia",
       "skills": [
-        "./skills/engineering/commit",
-        "./skills/engineering/ship",
         "./skills/engineering/domain-storytelling",
-        "./skills/engineering/infra-map",
-        "./skills/productivity/gmail",
-        "./skills/productivity/google-calendar",
-        "./skills/productivity/email-draft",
-        "./skills/productivity/transcribe",
-        "./skills/productivity/youtube-collector",
-        "./skills/productivity/discord-message",
-        "./skills/claude-code/skill-creator",
-        "./skills/claude-code/slash-command-creator",
-        "./skills/claude-code/subagent-creator",
-        "./skills/claude-code/hook-creator",
-        "./skills/claude-code/cc-usage-audit"
+        "./skills/engineering/infra-map"
       ],
       "hooks": {
         "SessionStart": [

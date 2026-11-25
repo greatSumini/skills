@@ -34,13 +34,13 @@ clone 실패 시 사용자에게 network 이슈 가능성을 보고하고 중단
 | From (cc-system 내)                  | To (타겟 프로젝트)                   | 비고                                                                           |
 | ------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------ |
 | `skills/harness/persuasion-review/`  | `.claude/skills/persuasion-review/`  | skill 본체 + SPEC + scripts 통째                                               |
-| `agents/tech-critic-lead.md` | `.claude/agents/tech-critic-lead.md` | 자율 루프·ideation 이식 시에만 필요. persuasion-review 단독 사용이면 생략 가능 |
+| `skills/harness/agents/tech-critic-lead.md` | `.claude/agents/tech-critic-lead.md` | 자율 루프·ideation 이식 시에만 필요. persuasion-review 단독 사용이면 생략 가능 |
 
 ```bash
 mkdir -p .claude/skills .claude/agents persuasion-data
 cp -R "$CC_SYSTEM/skills/harness/persuasion-review" .claude/skills/
 # (선택) ideation/tech-critic-lead 도 함께 이식할 때만:
-# cp "$CC_SYSTEM/agents/tech-critic-lead.md" .claude/agents/
+# cp "$CC_SYSTEM/skills/harness/agents/tech-critic-lead.md" .claude/agents/
 ```
 
 목적지에 같은 이름 파일/디렉토리가 이미 있으면 **덮어쓰지 말고** 사용자에게 diff 를 보여주고 어떻게 머지할지 물어라.
