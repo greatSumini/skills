@@ -1,6 +1,6 @@
 {
   "name": "greatsumini-skills",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "greatSumini's Claude Code skills: commit/ship, Gmail·Calendar·transcribe, and skill/hook/sub-agent authoring tools.",
   "author": {
     "name": "Sumin Choi",
@@ -8,11 +8,18 @@
   },
   "repository": "https://github.com/greatSumini/skills",
   "license": "MIT",
-  "keywords": ["skills", "git", "gmail", "calendar", "claude-code"],
+  "keywords": [
+    "skills",
+    "git",
+    "gmail",
+    "calendar",
+    "claude-code"
+  ],
   "skills": [
     "./skills/engineering/commit",
     "./skills/engineering/ship",
     "./skills/engineering/domain-storytelling",
+    "./skills/engineering/infra-map",
     "./skills/productivity/gmail",
     "./skills/productivity/google-calendar",
     "./skills/productivity/email-draft",

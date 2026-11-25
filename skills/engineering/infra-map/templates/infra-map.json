@@ -1,0 +1,53 @@
+{
+ "nodes": [
+  {
+   "name": "User Web",
+   "note": "(고객용)",
+   "zone": "client",
+   "stack": "Next.js",
+   "deploy": "Vercel",
+   "to": [
+    "Server",
+    "Google"
+   ]
+  },
+  {
+   "name": "Admin Web",
+   "note": "(운영진용)",
+   "zone": "client",
+   "stack": "Next.js",
+   "deploy": "Vercel",
+   "to": [
+    "Server"
+   ]
+  },
+  {
+   "name": "Server",
+   "zone": "server",
+   "stack": "Nest.js",
+   "deploy": "Railway",
+   "to": [
+    "Database",
+    "Storage",
+    "Google"
+   ]
+  },
+  {
+   "name": "Database",
+   "zone": "external",
+   "deploy": "Supabase"
+  },
+  {
+   "name": "Storage",
+   "zone": "external",
+   "deploy": "Cloudflare R2"
+  },
+  {
+   "name": "Google",
+   "note": "(로그인)",
+   "zone": "external",
+   "auth": true,
+   "deploy": "OAuth"
+  }
+ ]
+}
