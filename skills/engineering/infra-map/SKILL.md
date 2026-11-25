@@ -1,6 +1,6 @@
 ---
 name: infra-map
-description: 서비스의 인프라 지도(클라이언트 · 서버 · 외부 제공자 칸에 어떤 노드가 있고 어떻게 이어지는지)를 docs/infra-map.json으로 관리하고 Excalidraw 손그림으로 그린다. 기능 하나를 만들기 전에 그 요청이 어느 노드를 어떤 순서로 지나가는지 리퀘스트 맵으로 그린다. "인프라 맵", "인프라 지도", "infra map", "리퀘스트 맵", "request map", "요청 흐름 그려줘", "이 기능 요청이 어디를 지나가?", "노드 추가해줘" 등에 트리거된다.
+description: 서비스의 인프라 지도(클라이언트 · 서버 · 외부 제공자 칸에 어떤 노드가 있고 어떻게 이어지는지)를 docs/infra-map.json으로 관리하고 손그림 지도로 그린다. 기능 하나를 만들기 전에 그 요청이 어느 노드를 어떤 순서로 지나가는지 리퀘스트 맵으로 그린다. "인프라 맵", "인프라 지도", "infra map", "리퀘스트 맵", "request map", "요청 흐름 그려줘", "이 기능 요청이 어디를 지나가?", "노드 추가해줘" 등에 트리거된다.
 ---
 
 # infra-map
@@ -72,4 +72,4 @@ node <skill-dir>/scripts/infra-view.mjs docs/infra-map.json --check             
 
 - `.excalidraw`·`.html`을 임시 폴더에 만들고 html을 브라우저로 연다. `.excalidraw`는 excalidraw.com에 끌어다 놓으면 그대로 열려서 손으로 고칠 수 있다.
 - `--png`면 크롬 헤드리스로 PNG까지 찍는다(문서·노트에 붙일 때). `--out 경로`로 저장 위치를 정한다.
-- html은 Excalidraw 렌더러를 CDN에서 불러온다(인터넷 필요).
+- 의존성이 없다. 손그림 선은 스크립트가 직접 그리고, 글씨체는 `<skill-dir>/fonts/`의 손글씨 폰트(Excalifont·Gaegu, OFL)를 싣는다. 인터넷·npm 설치가 필요 없다.

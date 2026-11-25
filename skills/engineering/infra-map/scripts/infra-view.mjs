@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// docs/infra-map.json 을 Excalidraw 손그림 지도로 그린다. 리퀘스트 맵(요청 하나가 지나가는 길)을 겹쳐 그릴 수도 있다. 의존성 없음.
+// docs/infra-map.json 을 손그림 지도로 그린다. 리퀘스트 맵(요청 하나가 지나가는 길)을 겹쳐 그릴 수도 있다. 의존성 없음.
 //
 //   node <skill-dir>/scripts/infra-view.mjs [docs/infra-map.json] [--request 요청.json] [--out 파일] [--png] [--no-open] [--check]
 //
 // 만드는 것 (--out 을 안 주면 임시 폴더)
 //   <이름>.excalidraw  — excalidraw.com 에 끌어다 놓으면 그대로 열리고 고칠 수 있다
-//   <이름>.html        — 브라우저 미리보기 (Excalidraw 렌더러를 CDN에서 불러온다. 인터넷 필요)
+//   <이름>.html        — 브라우저 미리보기. 손그림 SVG 를 직접 그린다(폰트도 fonts/ 에서 싣는다 — 인터넷·패키지 불필요)
 //   <이름>.png         — --png 일 때. 크롬 헤드리스로 html 을 찍는다
 //
 // --check: 지도 규칙을 어긴 곳이 있으면 종료 코드 1
@@ -162,27 +162,64 @@ if (!req) {
 const scene = { type: "excalidraw", version: 2, source: "infra-map", elements: els, appState: { viewBackgroundColor: "#ffffff", gridSize: null }, files: {} };
 writeFileSync(`${outBase}.excalidraw`, JSON.stringify(scene, null, 1));
 
+// ── 손그림 SVG (의존성 없음) ─────────────────────────
+// Excalidraw 와 비슷하게: 선은 두 번 살짝 다르게 긋고, 글씨는 같이 싣는 손글씨 폰트(fonts/)로 쓴다.
+let rs = 7;
+const rnd = () => ((rs = (rs * 16807) % 2147483647) / 2147483647) - 0.5; // 같은 입력이면 같은 그림
+const j = (v) => v + rnd() * 2.4;
+const stroke1 = (x1, y1, x2, y2) => {
+  const len = Math.hypot(x2 - x1, y2 - y1) || 1, bow = Math.min(4, len * 0.012) * (rnd() * 2);
+  const mx = (x1 + x2) / 2 + (-(y2 - y1) / len) * bow, my = (y1 + y2) / 2 + ((x2 - x1) / len) * bow;
+  return `M${j(x1)} ${j(y1)} Q${mx} ${my} ${j(x2)} ${j(y2)}`;
+};
+const rough = (x1, y1, x2, y2) => stroke1(x1, y1, x2, y2) + " " + stroke1(x1, y1, x2, y2);
+const roundRect = (x, y, w, h, r = 22) => [0, 1].map(() =>
+  `M${j(x + r)} ${j(y)} L${j(x + w - r)} ${j(y)} Q${x + w} ${y} ${j(x + w)} ${j(y + r)} L${j(x + w)} ${j(y + h - r)} Q${x + w} ${y + h} ${j(x + w - r)} ${j(y + h)} L${j(x + r)} ${j(y + h)} Q${x} ${y + h} ${j(x)} ${j(y + h - r)} L${j(x)} ${j(y + r)} Q${x} ${y} ${j(x + r)} ${j(y)}`).join(" ");
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const svgParts = [];
+for (const e of els) {
+  const st = `stroke="${e.strokeColor}" stroke-width="${e.strokeWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
+  if (e.type === "rectangle") svgParts.push(`<path d="${roundRect(e.x, e.y, e.width, e.height)}" ${st}/>`);
+  else if (e.type === "ellipse") svgParts.push(`<ellipse cx="${e.x + e.width / 2}" cy="${e.y + e.height / 2}" rx="${e.width / 2}" ry="${e.height / 2}" fill="${e.backgroundColor}" stroke="none"/>` +
+    [0, 1].map(() => `<ellipse cx="${j(e.x + e.width / 2)}" cy="${j(e.y + e.height / 2)}" rx="${e.width / 2 + rnd()}" ry="${e.height / 2 + rnd()}" ${st}/>`).join(""));
+  else if (e.type === "arrow") {
+    const [x1, y1] = [e.x, e.y], [x2, y2] = [e.x + e.points[1][0], e.y + e.points[1][1]];
+    if (e.strokeStyle === "dashed") { svgParts.push(`<path d="${stroke1(x1, y1, x2, y2)}" ${st} stroke-dasharray="10 10"/>`); continue; }
+    let d = rough(x1, y1, x2, y2);
+    if (e.endArrowhead) {
+      const a = Math.atan2(y2 - y1, x2 - x1);
+      for (const s of [-1, 1]) d += " " + stroke1(x2, y2, x2 - 22 * Math.cos(a + s * 0.45), y2 - 22 * Math.sin(a + s * 0.45));
+    }
+    svgParts.push(`<path d="${d}" ${st}/>`);
+  } else if (e.type === "text") {
+    const anchor = e.textAlign === "left" ? "start" : "middle", x = e.textAlign === "left" ? e.x : e.x + e.width / 2;
+    const lines = e.text.split("\n").map((l, i) => `<tspan x="${x}" dy="${i ? e.fontSize * 1.25 : e.fontSize}">${esc(l)}</tspan>`).join("");
+    svgParts.push(`<text y="${e.y}" font-size="${e.fontSize}" text-anchor="${anchor}" fill="${e.strokeColor}">${lines}</text>`);
+  }
+}
+const minX = Math.min(...els.map((e) => e.x)) - 40, minY = Math.min(...els.map((e) => e.y)) - 40;
+const maxX = Math.max(...els.map((e) => e.x + (e.width || 0))) + 40, maxY = Math.max(...els.map((e) => e.y + (e.height || 0))) + 40;
+const font = (f) => readFileSync(join(dirname(new URL(import.meta.url).pathname), "..", "fonts", f)).toString("base64");
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${maxX - minX} ${maxY - minY}" width="${maxX - minX}" height="${maxY - minY}">
+<style>@font-face{font-family:Hand;src:url(data:font/woff2;base64,${font("Excalifont-Regular.woff2")}) format("woff2")}
+@font-face{font-family:HandKo;src:url(data:font/woff2;base64,${font("Gaegu-Bold-ko.woff2")}) format("woff2");size-adjust:128%}
+text{font-family:Hand,HandKo,sans-serif}</style>
+<rect x="${minX}" y="${minY}" width="100%" height="100%" fill="#fff"/>
+${svgParts.join("\n")}
+</svg>`;
 const html = `<!doctype html><meta charset="utf-8"><title>${basename(outBase)}</title>
-<style>body{margin:0;background:#fff;font:14px -apple-system,sans-serif}#v svg{display:block;width:100%;height:auto}#m{padding:12px;color:#868e96}</style>
-<div id="m">Excalidraw 렌더러 불러오는 중… (${basename(outBase)}.excalidraw 를 excalidraw.com 에 끌어다 놓으면 고칠 수 있다)</div><div id="v"></div>
-<script type="module">
-import { exportToSvg } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?bundle";
-const scene = ${JSON.stringify(scene)};
-const svg = await exportToSvg({ elements: scene.elements, appState: { ...scene.appState, exportBackground: true, exportPadding: 30 }, files: {} });
-await document.fonts.ready;
-document.getElementById("v").append(svg); document.getElementById("m").remove(); document.title += " ✓";
-</script>`;
+<style>body{margin:0;background:#fff}svg{display:block;max-width:100%;height:auto}</style>
+${svg}`;
 writeFileSync(`${outBase}.html`, html);
 console.log(`${outBase}.excalidraw\n${outBase}.html`);
 
 if (flag("--png")) {
   const chrome = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "google-chrome", "chromium"].find((c) => c.startsWith("/") ? existsSync(c) : true);
   const prof = mkdtempSync(join(tmpdir(), "infra-chrome-"));
-  const w = Math.max(...els.map((e) => e.x + (e.width || 0))) + 120, h = Math.max(...els.map((e) => e.y + (e.height || 0))) + 1500; // 넉넉히 찍고 아래 빈 곳은 magick -trim 으로 자른다
+  const w = maxX - minX, h = maxY - minY;
   try {
     execFileSync(chrome, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1", `--window-size=${Math.round(w)},${Math.round(h)}`,
-      "--virtual-time-budget=20000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html`], { stdio: "ignore", timeout: 90000 });
-    try { execFileSync("magick", [`${outBase}.png`, "-trim", "-bordercolor", "white", "-border", "40", `${outBase}.png`]); } catch {} // 아래 빈 곳 자르기(ImageMagick 있으면)
+      "--virtual-time-budget=3000", `--user-data-dir=${prof}`, `--screenshot=${outBase}.png`, `file://${outBase}.html`], { stdio: "ignore", timeout: 90000 });
     console.log(`${outBase}.png`);
   } catch { console.error("png 실패 — html 을 브라우저로 열어 확인한다"); }
   rmSync(prof, { recursive: true, force: true });

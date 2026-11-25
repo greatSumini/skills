@@ -53,7 +53,7 @@ git clone https://github.com/greatSumini/skills ~/repos/greatSumini/skills
 - **[commit](./skills/engineering/commit/SKILL.md)**: 대화 맥락을 근거로 변경을 의미 단위로 나눠 커밋하고 push 한다. `HARNESS_HEADLESS=1` 무인 모드를 지원한다.
 - **[ship](./skills/engineering/ship/SKILL.md)**: 커밋 → push → PR 생성 → squash merge 를 한 번에 한다.
 - **[domain-storytelling](./skills/engineering/domain-storytelling/SKILL.md)**: 기획 전에 AI가 나를 인터뷰해 업무 흐름·문제·해결 범위를 `docs/DOMAIN.md`로 남기는 도메인 스토리텔링 워크숍.
-- **[infra-map](./skills/engineering/infra-map/SKILL.md)**: 클라이언트·서버·외부 제공자 칸의 인프라 지도를 `docs/infra-map.json`으로 관리하고, 기능 하나의 요청이 지나가는 길(리퀘스트 맵)을 Excalidraw 손그림으로 그린다.
+- **[infra-map](./skills/engineering/infra-map/SKILL.md)**: 클라이언트·서버·외부 제공자 칸의 인프라 지도를 `docs/infra-map.json`으로 관리하고, 기능 하나의 요청이 지나가는 길(리퀘스트 맵)을 손그림 지도로 그린다(의존성 없음).
 
 ### Productivity
 
