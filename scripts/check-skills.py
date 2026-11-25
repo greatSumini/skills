@@ -2,19 +2,21 @@
 """레포 규약을 기계로 검사한다 (CLAUDE.md 참고). 의존성 없음.
 
 1. 모든 SKILL.md 에 frontmatter `name`·`description` 이 있고, name 이 폴더명과 같다.
-2. 배포 bucket(engineering·productivity·claude-code)의 skill 은 plugin.json `skills` 와
-   최상위 README.md 와 bucket README.md 에 모두 있다. harness/ 는 plugin.json 에 없어야 한다.
-3. plugin.json 의 경로가 실제로 있다.
+2. 배포 bucket(engineering·productivity·claude-code·matfia)의 skill 은 marketplace.json matfia 항목 `skills` 와
+   최상위 README.md 와 bucket README.md 에 모두 있다. harness/ 는 거기 없어야 한다.
+3. 그 skills 경로가 실제로 있다.
 """
 import json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PROMOTED = ["engineering", "productivity", "claude-code"]
+PROMOTED = ["engineering", "productivity", "claude-code", "matfia"]
 NOT_SHIPPED = ["harness"]
 fail = []
 
-plugin = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())
+market = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
+# 플러그인 매니페스트는 marketplace.json 의 matfia 항목 하나다(plugin.json 없음 — 옛 이름 greatsumini-skills 별칭과 같은 폴더를 공유하려고)
+plugin = next(p for p in market["plugins"] if p["name"] == "matfia")
 shipped = {p.removeprefix("./").rstrip("/") for p in plugin["skills"]}
 readme = (ROOT / "README.md").read_text()
 
@@ -37,15 +39,15 @@ for skill_md in sorted((ROOT / "skills").glob("*/*/SKILL.md")):
         fail.append(f"{rel}: skills/{bucket}/README.md 에 링크 없음")
     if bucket in PROMOTED:
         if rel not in shipped:
-            fail.append(f"{rel}: plugin.json skills 에 없음")
+            fail.append(f"{rel}: marketplace.json matfia skills 에 없음")
         if f"./{rel}/SKILL.md" not in readme:
             fail.append(f"{rel}: 최상위 README.md 에 링크 없음")
     elif rel in shipped:
-        fail.append(f"{rel}: {bucket}/ 는 plugin.json 에 넣지 않는다")
+        fail.append(f"{rel}: {bucket}/ 는 플러그인에 넣지 않는다")
 
 for p in shipped:
     if not (ROOT / p / "SKILL.md").exists():
-        fail.append(f"plugin.json: {p}/SKILL.md 가 없음")
+        fail.append(f"marketplace.json: {p}/SKILL.md 가 없음")
 
 if fail:
     print("\n".join(fail)); print(f"\n{len(fail)}건 실패"); sys.exit(1)

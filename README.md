@@ -11,10 +11,15 @@
 
 ```bash
 claude plugin marketplace add greatSumini/skills
-claude plugin install greatsumini-skills@greatsumini
+claude plugin install matfia@matfia
 ```
 
-skill은 `/greatsumini-skills:commit`처럼 플러그인 이름이 앞에 붙는다. 업데이트: `claude plugin marketplace update greatsumini`
+skill은 `/matfia:commit`, `/matfia:infra-map`처럼 플러그인 이름이 앞에 붙는다. 업데이트: `claude plugin marketplace update matfia`
+
+마피아MCP(판단 카드 MCP, 하루 10회 무료)와 `/matfia:plan`·`design`·`review`·`teach`도 같이 들어 있다. 다시 켠 뒤 `/mcp`에서 matfia-brain 로그인을 하면 쓸 수 있다.
+
+> 예전 이름 `greatsumini-skills@greatsumini` 또는 마피아MCP 플러그인 `matfia@matfia-brain-plugin`을 쓰고 있었다면 지우고 위 명령으로 다시 설치한다:
+> `claude plugin uninstall greatsumini-skills` / `claude plugin uninstall matfia@matfia-brain-plugin`
 
 </details>
 
@@ -54,6 +59,15 @@ git clone https://github.com/greatSumini/skills ~/repos/greatSumini/skills
 - **[ship](./skills/engineering/ship/SKILL.md)**: 커밋 → push → PR 생성 → squash merge 를 한 번에 한다.
 - **[domain-storytelling](./skills/engineering/domain-storytelling/SKILL.md)**: 기획 전에 AI가 나를 인터뷰해 업무 흐름·문제·해결 범위를 `docs/DOMAIN.md`로 남기는 도메인 스토리텔링 워크숍.
 - **[infra-map](./skills/engineering/infra-map/SKILL.md)**: 클라이언트·서버·외부 제공자 칸의 인프라 지도를 `docs/infra-map.json`으로 관리하고, 기능 하나의 요청이 지나가는 길(리퀘스트 맵)을 손그림 지도로 그린다(의존성 없음).
+
+### Matfia (마피아MCP)
+
+마피아MCP 판단 카드를 쓰는 skill. 마피아MCP 로그인 연결이 필요하다. 자동 생성 — 직접 고치지 않는다.
+
+- **[plan](./skills/matfia/plan/SKILL.md)**: 만들고 싶은 것을 말하면 마피아MCP 판단으로 첫 버전 범위를 잡는다.
+- **[design](./skills/matfia/design/SKILL.md)**: 화면·디자인을 마피아MCP 판단으로 점검한다.
+- **[review](./skills/matfia/review/SKILL.md)**: 설계·계획을 결정 지점별로 마피아MCP 판단과 대조해 검토한다.
+- **[teach](./skills/matfia/teach/SKILL.md)**: 방금 한 결정이 왜 그런지 마피아MCP 판단으로 풀어 설명한다.
 
 ### Productivity
 
@@ -97,7 +111,7 @@ skills/
   engineering/ productivity/ claude-code/   플러그인에 들어가는 skill (bucket별 README.md)
   harness/                                  복사 설치용 하네스 skill
 agents/                  sub-agent (플러그인에 포함)
-.claude-plugin/          plugin.json · marketplace.json
+.claude-plugin/          marketplace.json (플러그인 매니페스트 matfia + 옛 이름 별칭)
 scripts/
   link-skills.sh         심볼릭 링크 설치
   check-skills.py        규약 검사 (CI에서 실행)

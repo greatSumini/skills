@@ -1,17 +1,117 @@
 {
-  "name": "greatsumini",
+  "name": "matfia",
   "owner": {
-    "name": "Sumin Choi",
-    "url": "https://github.com/greatSumini"
+    "name": "VIBE MAFIA CLUB",
+    "url": "https://www.vibemafiaclub.com"
   },
-  "description": "greatSumini's Claude Code skills, as an installable plugin.",
+  "description": "바이브마피아클럽 Claude Code 플러그인 — skill 모음 + 마피아MCP",
   "plugins": [
+    {
+      "name": "matfia",
+      "source": "./",
+      "displayName": "Matfia",
+      "version": "1.1.0",
+      "description": "바이브마피아클럽 Claude Code skill 모음 + 마피아MCP. 커밋·출하, 도메인 스토리텔링·인프라 맵, Gmail·캘린더·전사, skill 제작 도구와 판단 카드 MCP(로그인 연결, 하루 10회 무료) · /matfia:plan·design·review·teach.",
+      "author": {
+        "name": "Sumin Choi",
+        "url": "https://github.com/greatSumini"
+      },
+      "homepage": "https://www.vibemafiaclub.com/brain",
+      "repository": "https://github.com/greatSumini/skills",
+      "privacyPolicyUrl": "https://www.vibemafiaclub.com/privacy",
+      "license": "MIT",
+      "keywords": [
+        "vmc",
+        "matfia",
+        "마피아MCP",
+        "skills",
+        "claude-code"
+      ],
+      "category": "productivity",
+      "strict": false,
+      "skills": [
+        "./skills/engineering/commit",
+        "./skills/engineering/ship",
+        "./skills/engineering/domain-storytelling",
+        "./skills/engineering/infra-map",
+        "./skills/productivity/gmail",
+        "./skills/productivity/google-calendar",
+        "./skills/productivity/email-draft",
+        "./skills/productivity/transcribe",
+        "./skills/productivity/youtube-collector",
+        "./skills/productivity/discord-message",
+        "./skills/claude-code/skill-creator",
+        "./skills/claude-code/slash-command-creator",
+        "./skills/claude-code/subagent-creator",
+        "./skills/claude-code/hook-creator",
+        "./skills/claude-code/cc-usage-audit",
+        "./skills/matfia/plan",
+        "./skills/matfia/design",
+        "./skills/matfia/review",
+        "./skills/matfia/teach"
+      ],
+      "hooks": {
+        "SessionStart": [
+          {
+            "matcher": "startup|resume|clear|compact",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "node \"${CLAUDE_PLUGIN_ROOT}/plugin-hooks/inject.mjs\"",
+                "timeout": 10
+              }
+            ]
+          }
+        ]
+      },
+      "mcpServers": {
+        "matfia-brain": {
+          "type": "http",
+          "url": "${MATFIA_BRAIN_URL:-https://www.vibemafiaclub.com}/api/brain/mcp"
+        }
+      }
+    },
     {
       "name": "greatsumini-skills",
       "source": "./",
-      "description": "커밋·출하, Gmail·캘린더·전사, Claude Code skill/hook/서브에이전트 제작 도구 모음.",
-      "category": "productivity",
-      "keywords": ["skills", "git", "gmail", "calendar", "claude-code"]
+      "strict": false,
+      "version": "0.4.0",
+      "description": "(옛 이름) matfia로 옮겨 주세요 — claude plugin install matfia@matfia",
+      "skills": [
+        "./skills/engineering/commit",
+        "./skills/engineering/ship",
+        "./skills/engineering/domain-storytelling",
+        "./skills/engineering/infra-map",
+        "./skills/productivity/gmail",
+        "./skills/productivity/google-calendar",
+        "./skills/productivity/email-draft",
+        "./skills/productivity/transcribe",
+        "./skills/productivity/youtube-collector",
+        "./skills/productivity/discord-message",
+        "./skills/claude-code/skill-creator",
+        "./skills/claude-code/slash-command-creator",
+        "./skills/claude-code/subagent-creator",
+        "./skills/claude-code/hook-creator",
+        "./skills/claude-code/cc-usage-audit"
+      ],
+      "hooks": {
+        "SessionStart": [
+          {
+            "matcher": "startup|resume|clear",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "node \"${CLAUDE_PLUGIN_ROOT}/legacy/notice.mjs\"",
+                "timeout": 5
+              }
+            ]
+          }
+        ]
+      },
+      "author": {
+        "name": "Sumin Choi",
+        "url": "https://github.com/greatSumini"
+      }
     }
   ]
 }
