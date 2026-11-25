@@ -35,6 +35,8 @@ const ZONES = { client: "Client-side", server: "Server-side", external: "Externa
 const nodes = map.nodes ?? [];
 const byName = new Map(nodes.map((n) => [n.name, n]));
 const warns = [];
+// direct: 브라우저(클라이언트)가 직접 여는 외부 — 로그인 제공자·결제창. 옛 이름 auth 도 받는다
+const direct = (n) => Boolean(n.direct || n.auth);
 for (const n of nodes) {
   if (!ZONES[n.zone]) warns.push(`${n.name}: zone 은 client · server · external 중 하나`);
   for (const t of n.to ?? []) {
@@ -42,11 +44,14 @@ for (const n of nodes) {
     if (!m) { warns.push(`${n.name} → ${t}: 없는 노드`); continue; }
     const order = { client: 0, server: 1, external: 2 };
     if (order[m.zone] < order[n.zone]) warns.push(`${n.name} → ${t}: 연결은 client → server → external 방향만 쓴다`);
-    if (n.zone === "client" && m.zone === "external" && !m.auth) warns.push(`${n.name} → ${t}: 클라이언트가 외부를 직접 부른다 — 로그인 제공자(auth: true)가 아니면 서버를 거친다`);
+    if (n.zone === "client" && m.zone === "external" && !direct(m)) warns.push(`${n.name} → ${t}: 클라이언트가 외부를 직접 부른다 — 브라우저가 직접 여는 곳(로그인·결제창, direct: true)이 아니면 서버를 거친다`);
   }
 }
 for (const [i, s] of (req?.steps ?? []).entries()) {
   for (const k of ["from", "to"]) if (!byName.has(s[k])) warns.push(`요청 ${i + 1}단계 ${k}: 인프라 맵에 없는 노드 "${s[k]}" — 먼저 인프라 맵에 넣는다`);
+  const linked = (a, b) => (byName.get(a)?.to ?? []).includes(b);
+  if (byName.has(s.from) && byName.has(s.to) && !linked(s.from, s.to) && !linked(s.to, s.from))
+    warns.push(`요청 ${i + 1}단계 ${s.from} → ${s.to}: 인프라 맵에 없는 연결 — 먼저 인프라 맵 to 에 넣는다`);
 }
 for (const w of warns) console.error(`⚠ ${w}`);
 if (flag("--check")) process.exit(warns.length ? 1 : 0);
@@ -187,40 +192,65 @@ const anchor = (a, b) => {
   if (pb.c < pa.c) return [pa.x, ay, pb.x + W, by];
   return pb.y > pa.y ? [pa.x + W / 2, pa.y + pa.h, pb.x + W / 2, pb.y] : [pa.x + W / 2, pa.y, pb.x + W / 2, pb.y + pb.h];
 };
-// 서버 칸에서 상자·아래 글씨가 차지한 높이 구간 — 두 칸 건너는 선(클라이언트→로그인 제공자)은 그 사이 빈 길로 지난다
+// 서버 칸에서 상자·아래 글씨가 차지한 높이 구간 — 두 칸 건너는 선(클라이언트→로그인·결제창)은 그 사이 빈 길로 지난다
 const busy = (c) => nodes.filter((n) => pos.get(n.name).c === c).map((n) => { const p = pos.get(n.name); return [p.y - 14, p.y + p.h + 16 + belowLines(n).length * 30 + 10]; });
 const freeY = (c, want) => {
   const bs = busy(c); if (!bs.some(([t, b]) => want > t && want < b)) return want;
   const cands = bs.flatMap(([t, b]) => [t - 6, b + 6]).filter((y) => !bs.some(([t, b]) => y > t && y < b));
   return cands.sort((u, v) => Math.abs(u - want) - Math.abs(v - want))[0] ?? want;
 };
-if (!req) {
-  for (const [a, b] of edges) {
-    const [x1, y1, x2, y2] = anchor(a, b);
-    const head = !(byName.get(a).zone === "client" && byName.get(b).zone === "server");
-    const ca = pos.get(a).c, cb = pos.get(b).c;
-    if (Math.abs(cb - ca) >= 2) {
-      const yf = freeY(ca + 1, y2);
-      const xa = COLX[ca + 1] - 40, xb = COLX[cb - 1] + W + 40;
-      if (Math.abs(yf - y2) < 2 && Math.abs(yf - y1) < 2) line(x1, y1, x2, y2, { head }); else poly([[x1, y1], [xa, yf], [xb, yf], [x2, y2]], { head });
-    } else line(x1, y1, x2, y2, { head });
+// 두 노드 사이 선의 꺾은점들. 두 칸을 건너면 가운데 칸 빈 길로, 같은 칸이면 사이 상자를 피해 바깥으로 돈다
+function route(a, b, off = 0) {
+  let [x1, y1, x2, y2] = anchor(a, b);
+  const pa = pos.get(a), pb = pos.get(b), span = Math.abs(pb.c - pa.c);
+  if (span === 0) {
+    const between = [...pos.values()].some((p) => p.c === pa.c && p !== pa && p !== pb && p.y > Math.min(pa.y, pb.y) && p.y < Math.max(pa.y, pb.y));
+    if (!between) return [[x1 + off, y1], [x2 + off, y2]];
+    const side = pa.c === 0 ? -1 : 1, edgeX = side < 0 ? pa.x : pa.x + W, sx = edgeX + side * (40 + Math.abs(off));
+    const ya = cy(a) + off, yb = cy(b) + off;
+    return [[edgeX, ya], [sx, ya], [sx, yb], [edgeX, yb]];
   }
+  y1 += off; y2 += off;
+  if (span >= 2) {
+    const lo = Math.min(pa.c, pb.c), yf = freeY(lo + 1, pb.c > pa.c ? y2 : y1) + off;
+    if (!(Math.abs(yf - y2) < 2 && Math.abs(yf - y1) < 2)) {
+      const xl = COLX[lo + 1] - 40, xr = COLX[lo + 1] + W + 40;
+      return pb.c > pa.c ? [[x1, y1], [xl, yf], [xr, yf], [x2, y2]] : [[x1, y1], [xr, yf], [xl, yf], [x2, y2]];
+    }
+  }
+  return [[x1, y1], [x2, y2]];
+}
+if (!req) {
+  for (const [a, b] of edges) poly(route(a, b), { head: !(byName.get(a).zone === "client" && byName.get(b).zone === "server") });
 } else {
   // 리퀘스트 맵: 인프라 연결은 옅게, 요청 단계는 빨간 번호 화살표로
   for (const e of els) if (e.type === "rectangle") e.strokeColor = "#868e96";
+  // 번호 자리: 선 위 여러 지점 중 상자·글씨·점선·다른 번호와 가장 덜 겹치는 곳
+  const boxes = () => els.filter((e) => e.type === "rectangle" || (e.type === "text" && !e.customData?.step) || e.type === "ellipse");
+  const dividers = [(COLX[0] + W + COLX[1]) / 2, (COLX[1] + W + COLX[2]) / 2];
+  const along = (pts, t) => {
+    const lens = pts.slice(1).map((q, k) => Math.hypot(q[0] - pts[k][0], q[1] - pts[k][1])), total = lens.reduce((u, v) => u + v, 0);
+    let d = total * t;
+    for (const [k, L] of lens.entries()) { if (d <= L) { const r = L ? d / L : 0; return [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * r, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * r]; } d -= L; }
+    return pts.at(-1);
+  };
+  const cost = ([x, y]) => {
+    let c = 0;
+    for (const e of boxes()) { const ov = Math.max(0, Math.min(x + 19, e.x + e.width) - Math.max(x - 19, e.x)) * Math.max(0, Math.min(y + 19, e.y + e.height) - Math.max(y - 19, e.y)); c += ov * (e.type === "ellipse" ? 4 : 1); }
+    for (const dx of dividers) if (Math.abs(x - dx) < 22) c += 300;
+    return c;
+  };
   const seen = new Map();
   for (const [i, s] of req.steps.entries()) {
     if (!byName.has(s.from) || !byName.has(s.to)) continue;
     const first = els.length; // 이 단계에서 만든 요소에 단계 번호를 단다(html 단계 보기용)
     const key = [s.from, s.to].sort().join("|");
     const k = seen.get(key) ?? 0; seen.set(key, k + 1);
-    const off = k === 0 ? -20 : 20 + (k - 1) * 40; // 같은 두 노드 사이 여러 단계는 위아래로 벌린다
-    let [x1, y1, x2, y2] = anchor(s.from, s.to);
-    if (x1 !== x2) { y1 += off; y2 += off; } else { x1 += off; x2 += off; }
-    line(x1, y1, x2, y2, { color: "#e03131", width: 2 });
-    // 두 칸을 건너는 선(클라이언트↔외부)은 번호를 가운데 칸 상자 위가 아니라 칸 사이 빈 곳에 둔다
-    const span = Math.abs(pos.get(s.to).c - pos.get(s.from).c), t = span >= 2 ? (pos.get(s.to).c > pos.get(s.from).c ? 0.8 : 0.2) : 0.5;
-    const mx = x1 + (x2 - x1) * t, my = y1 + (y2 - y1) * t;
+    const off = k === 0 ? -20 : 20 + (k - 1) * 40; // 같은 두 노드 사이 여러 단계는 벌린다
+    const pts = route(s.from, s.to, off);
+    poly(pts, { color: "#e03131", width: 2 });
+    const cands = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8].map((t) => along(pts, t));
+    const [mx, my] = cands.reduce((best, p) => (cost(p) < cost(best) ? p : best));
     els.push(base({ type: "ellipse", x: mx - 17, y: my - 17, width: 34, height: 34, strokeColor: "#e03131", backgroundColor: "#ffffff" }));
     text(mx, my - 13, String(i + 1), { fontSize: 20, color: "#e03131" });
     for (const e of els.slice(first)) e.customData = { step: i + 1 };

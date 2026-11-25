@@ -46,7 +46,7 @@
    "name": "Google",
    "note": "(로그인)",
    "zone": "external",
-   "auth": true,
+   "direct": true,
    "deploy": "OAuth"
   }
  ]

@@ -23,7 +23,7 @@ description: 서비스의 인프라 지도(클라이언트 · 서버 · 외부 �
   { "name": "User Web", "note": "(멤버용)\napp.example.com", "zone": "client", "stack": "Next.js", "deploy": "Vercel", "to": ["Server", "Google"] },
   { "name": "Server", "zone": "server", "stack": "Nest.js", "deploy": "Railway", "to": ["Database"], "risks": ["관리자 API가 같은 서버에 있음"] },
   { "name": "Database", "zone": "external", "deploy": "Supabase" },
-  { "name": "Google", "note": "(로그인)", "zone": "external", "auth": true, "deploy": "OAuth" }
+  { "name": "Google", "note": "(로그인)", "zone": "external", "direct": true, "deploy": "OAuth" }
 ]}
 ```
 
@@ -35,14 +35,14 @@ description: 서비스의 인프라 지도(클라이언트 · 서버 · 외부 �
 | `stack` · `deploy` | 기술과 배포 위치 |
 | `to` | 이 노드가 부르는 노드 |
 | `risks` | 이 노드에서 조심할 것. 빨간 글씨로 보인다 |
-| `auth` | 클라이언트가 직접 여는 로그인 제공자(Google·카카오)면 `true` |
+| `direct` | 브라우저(클라이언트)가 직접 여는 외부 — 로그인 제공자(Google·카카오)·결제창(토스·Payple·Stripe Checkout)이면 `true`. 옛 이름 `auth`도 받는다 |
 
 규칙 — `--check`가 잡는다.
 
 - 연결은 **client → server → external** 방향만 쓴다.
-- 클라이언트가 외부를 직접 부르는 건 로그인 제공자(`auth: true`)뿐이다. 나머지는 서버를 거친다.
+- 클라이언트가 외부를 직접 부르는 건 브라우저가 직접 여는 곳(`direct: true` — 로그인·결제창)뿐이다. 나머지는 서버를 거친다. 이런 노드는 외부 칸 맨 위에 그려진다.
 - Google 로그인처럼 웹 화면과 서버가 따로 있는 외부 서비스도 **노드 하나**로 그린다.
-- Supabase Auth·Clerk·Auth0처럼 **로그인을 중개하는 서비스**가 있으면 클라이언트는 중개자를 부르고, 중개자가 Kakao·Google을 부른다. 중개자에 `auth: true`를 붙이고 `to`에 제공자를 적는다(제공자는 `auth`를 빼고, 오른쪽 칸에 그려진다). 클라이언트에서 Kakao·Google로 바로 잇지 않는다.
+- Supabase Auth·Clerk·Auth0처럼 **로그인을 중개하는 서비스**가 있으면 클라이언트는 중개자를 부르고, 중개자가 Kakao·Google을 부른다. 중개자에 `direct: true`를 붙이고 `to`에 제공자를 적는다(제공자는 `direct`를 빼고, 오른쪽 칸에 그려진다). 클라이언트에서 Kakao·Google로 바로 잇지 않는다.
 
 노드를 더하거나 바꾸면 json을 고치고 그려서 보여 준다.
 
@@ -62,7 +62,7 @@ description: 서비스의 인프라 지도(클라이언트 · 서버 · 외부 �
 ```
 
 - 한 단계 = 노드 하나에서 다른 노드로 가는 요청 또는 응답 하나. 응답이 그 장면에서 의미가 있을 때만(토큰을 받는다 등) 단계로 적는다.
-- 인프라 맵에 없는 노드가 필요하면 **먼저 인프라 맵에 넣자고 하고** 넣은 뒤 그린다.
+- 인프라 맵에 없는 노드나 연결(어느 방향으로도 `to`에 없는 두 노드)이 필요하면 **먼저 인프라 맵에 넣자고 하고** 넣은 뒤 그린다. 스크립트가 경고한다(응답처럼 반대 방향 단계는 괜찮다). 예: AI 앱이 브라우저로 로그인 화면을 열면 AI 앱 `to`에 웹을 넣는다.
 - 다 그리면 그림 아래에 이 흐름에서 **실패하거나 위조될 수 있는 단계**를 짚어 한두 줄로 묻는다. 예: "2단계 콜백 값을 누가 조작하면 4단계에서 막히나요?"
 
 ## 그리기
