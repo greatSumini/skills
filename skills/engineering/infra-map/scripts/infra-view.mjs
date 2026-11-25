@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// docs/infra-map.json 을 손그림 지도로 그린다. 리퀘스트 맵(요청 하나가 지나가는 길)을 겹쳐 그릴 수도 있다. 의존성 없음.
+// docs/infra-map.json 을 손그림 지도로 그린다. 리퀘스트 플로우(요청 하나가 지나가는 길)을 겹쳐 그릴 수도 있다. 의존성 없음.
 //
-//   node <skill-dir>/scripts/infra-view.mjs [docs/infra-map.json] [--request 요청.json] [--out 파일] [--png] [--no-open] [--check]
+//   node <skill-dir>/scripts/infra-view.mjs [docs/infra-map.json] [--flow 요청.json] [--out 파일] [--png] [--no-open] [--check]
 //
 // 만드는 것 (--out 을 안 주면 임시 폴더)
 //   <이름>.excalidraw  — excalidraw.com 에 끌어다 놓으면 그대로 열리고 고칠 수 있다
@@ -18,16 +18,16 @@ import { execFile, execFileSync } from "node:child_process";
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const opt = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
-const valued = new Set(["--out", "--request"]);
+const valued = new Set(["--out", "--flow", "--request"]);
 const input = resolve(args.find((a, i) => !a.startsWith("--") && !valued.has(args[i - 1])) ?? "docs/infra-map.json");
 if (!existsSync(input)) {
   console.error(`없음: ${input} — <skill-dir>/templates/infra-map.json 을 복사해 시작한다`);
   process.exit(1);
 }
 const map = JSON.parse(readFileSync(input, "utf8"));
-const reqPath = opt("--request");
+const reqPath = opt("--flow") ?? opt("--request"); // --request 는 옛 이름(리퀘스트 맵) 시절 옵션
 const req = reqPath ? JSON.parse(readFileSync(resolve(reqPath), "utf8")) : null;
-const stem = req ? `request-${slug(req.name ?? "map")}` : basename(input, ".json");
+const stem = req ? `flow-${slug(req.name ?? "flow")}` : basename(input, ".json");
 const outBase = opt("--out") ? resolve(opt("--out")).replace(/\.(html|png|excalidraw)$/, "") : join(mkdtempSync(join(tmpdir(), "infra-map-")), stem);
 
 // ── 검사 ─────────────────────────────────────────────
@@ -223,7 +223,7 @@ function route(a, b, off = 0) {
 if (!req) {
   for (const [a, b] of edges) poly(route(a, b), { head: !(byName.get(a).zone === "client" && byName.get(b).zone === "server") });
 } else {
-  // 리퀘스트 맵: 인프라 연결은 옅게, 요청 단계는 빨간 번호 화살표로
+  // 리퀘스트 플로우: 인프라 연결은 옅게, 요청 단계는 빨간 번호 화살표로
   for (const e of els) if (e.type === "rectangle") e.strokeColor = "#868e96";
   // 번호 자리: 선 위 여러 지점 중 상자·글씨·점선·다른 번호와 가장 덜 겹치는 곳
   const boxes = () => els.filter((e) => e.type === "rectangle" || (e.type === "text" && !e.customData?.step) || e.type === "ellipse");
@@ -317,7 +317,7 @@ text{font-family:Hand,HandKo,sans-serif}</style>
 <rect x="${minX}" y="${minY}" width="100%" height="100%" fill="#fff"/>
 ${svgParts.join("\n")}
 </svg>`;
-// 리퀘스트 맵 html 은 단계 보기로 연다 — 한 번에 선 하나와 설명 한 줄만. ←/→(또는 화면 오른쪽·왼쪽 탭)로 이동, 0단계 = 전체.
+// 리퀘스트 플로우 html 은 단계 보기로 연다 — 한 번에 선 하나와 설명 한 줄만. ←/→(또는 화면 오른쪽·왼쪽 탭)로 이동, 0단계 = 전체.
 // 주소 끝 #숫자 로 그 단계를 바로 연다 — #0 은 전체 보기(png 는 이걸 찍는다)
 const stepper = !req ? "" : `
 <div id="cap"></div>

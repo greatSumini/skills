@@ -54,7 +54,7 @@ git clone https://github.com/greatSumini/skills ~/repos/greatSumini/skills
 ### Engineering
 
 - **[domain-storytelling](./skills/engineering/domain-storytelling/SKILL.md)**: 기획 전에 AI가 나를 인터뷰해 업무 흐름·문제·해결 범위를 `docs/DOMAIN.md`로 남기는 도메인 스토리텔링 워크숍.
-- **[infra-map](./skills/engineering/infra-map/SKILL.md)**: 클라이언트·서버·외부 제공자 칸의 인프라 지도를 `docs/infra-map.json`으로 관리하고, 기능 하나의 요청이 지나가는 길(리퀘스트 맵)을 손그림 지도로 그린다(의존성 없음).
+- **[infra-map](./skills/engineering/infra-map/SKILL.md)**: 클라이언트·서버·외부 제공자 칸의 인프라 지도를 `docs/infra-map.json`으로 관리하고, 기능 하나의 요청이 지나가는 길(리퀘스트 플로우)을 손그림 지도로 그린다(의존성 없음).
 
 ### Harness (복사 설치, 플러그인 미포함)
 
