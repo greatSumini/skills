@@ -52,8 +52,9 @@ for (const w of warns) console.error(`⚠ ${w}`);
 if (flag("--check")) process.exit(warns.length ? 1 : 0);
 
 // ── 배치 ─────────────────────────────────────────────
-// 칸: client | server | external | (external 이 부르는 external)
+// 칸: client | server | external | (external 이 부르는 external). 외부 상자는 이름·배포처를 한 줄로 넣어 낮게 그린다
 const W = 380, H = 130, COLX = [140, 700, 1260, 1960], TOP = 150;
+const hOf = (n) => (n.zone === "external" ? 96 : H);
 const col = (n) => {
   if (n.zone === "client") return 0;
   if (n.zone === "server") return 1;
@@ -62,18 +63,38 @@ const col = (n) => {
 };
 const pos = new Map();
 const colY = [TOP, TOP, TOP, TOP];
-for (const n of nodes) {
+const place = (n) => {
   const c = col(n);
-  // 오른쪽 칸(외부가 부르는 외부)은 부르는 쪽과 같은 높이에 둔다
   if (c === 3) {
     const caller = pos.get(nodes.find((m) => (m.to ?? []).includes(n.name))?.name);
     if (caller) colY[3] = Math.max(colY[3], caller.y);
   }
   const below = belowLines(n).length;
-  pos.set(n.name, { x: COLX[c], y: colY[c], c });
-  colY[c] += H + 40 + below * 30 + 30;
+  const h = hOf(n);
+  pos.set(n.name, { x: COLX[c], y: colY[c], c, h });
+  colY[c] += h + (n.zone === "external" ? 24 : 70) + below * 30;
+};
+// 왼쪽 칸부터 놓고, 다음 칸은 부르는 노드들의 평균 높이 순으로 정렬한다(교차 줄이기).
+// 클라이언트가 직접 여는 노드(로그인 제공자)는 외부 칸 맨 위에 둔다 — 아래에 두면 그 선이 서버 칸을 가로지른다
+{
+  for (const c of [0, 1, 2, 3]) {
+    const cs = nodes.filter((n) => col(n) === c);
+    const bary = (n) => { const ys = nodes.filter((m) => (m.to ?? []).includes(n.name) && pos.has(m.name)).map((m) => pos.get(m.name).y); return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : Infinity; };
+    const authTop = (n) => (nodes.some((m) => m.zone === "client" && (m.to ?? []).includes(n.name)) ? -1e6 : 0);
+    const order = c === 0 ? cs : cs.map((n, i) => ({ n, i, b: bary(n) + authTop(n) })).sort((p, q) => p.b - q.b || p.i - q.i).map((p) => p.n);
+    order.forEach(place);
+    if (c === 1) {
+      // 서버 칸이 짧으면 클라이언트 칸 가운데로 내린다 — 외부 칸 정렬 전에 해야 순서가 맞다
+      const ps = [...pos.values()], cl = ps.filter((p) => p.c === 0), sv = ps.filter((p) => p.c === 1);
+      if (cl.length && sv.length) {
+        const ct = Math.max(...cl.map((p) => p.y + p.h)), st = Math.max(...sv.map((p) => p.y + p.h)) - Math.min(...sv.map((p) => p.y));
+        const shift = Math.max(0, (ct - TOP - st) / 2);
+        for (const p of sv) p.y += shift;
+      }
+    }
+  }
 }
-const bottom = Math.max(...colY, TOP + H) + 20;
+const bottom = Math.max(...[...pos.values()].map((p) => p.y + p.h + 120), TOP + H) + 20;
 
 // ── Excalidraw 요소 ──────────────────────────────────
 const els = [];
@@ -83,60 +104,105 @@ const base = (o) => ({
   strokeWidth: 2, strokeStyle: "solid", roughness: 1, opacity: 100, groupIds: [], frameId: null, roundness: null,
   seed: seed++, version: 1, versionNonce: seed * 7, isDeleted: false, boundElements: null, updated: 1, link: null, locked: false, ...o,
 });
-const textW = (s, size) => Math.max(...s.split("\n").map((l) => [...l].reduce((w, ch) => w + (ch.charCodeAt(0) > 0x2e80 ? size : size * 0.56), 0)));
+function textW(s, size) { return Math.max(...s.split("\n").map((l) => [...l].reduce((w, ch) => w + (ch.charCodeAt(0) > 0x2e80 ? size : size * 0.56), 0))); }
 const text = (x, y, s, o = {}) => {
   const size = o.fontSize ?? 24, w = textW(s, size), h = s.split("\n").length * size * 1.25;
   const left = o.align === "left" ? x : x - w / 2;
   els.push(base({ type: "text", x: left, y, width: w, height: h, text: s, originalText: s, fontSize: size, fontFamily: 5,
     textAlign: o.align ?? "center", verticalAlign: "top", containerId: null, lineHeight: 1.25, autoResize: true, strokeColor: o.color ?? "#1e1e1e" }));
 };
-const line = (x1, y1, x2, y2, o = {}) => els.push(base({
-  type: "arrow", x: x1, y: y1, width: Math.abs(x2 - x1), height: Math.abs(y2 - y1), points: [[0, 0], [x2 - x1, y2 - y1]],
+const line = (x1, y1, x2, y2, o = {}) => poly([[x1, y1], [x2, y2]], o);
+const poly = (pts, o = {}) => els.push(base({
+  type: "arrow", x: pts[0][0], y: pts[0][1], width: Math.abs(pts.at(-1)[0] - pts[0][0]), height: Math.abs(pts.at(-1)[1] - pts[0][1]), points: pts.map(([x, y]) => [x - pts[0][0], y - pts[0][1]]),
   startArrowhead: null, endArrowhead: o.head === false ? null : "arrow", startBinding: null, endBinding: null, lastCommittedPoint: null,
   strokeColor: o.color ?? "#1e1e1e", strokeStyle: o.dashed ? "dashed" : "solid", strokeWidth: o.width ?? 2, roundness: { type: 2 }, elbowed: false,
 }));
 
+function wrap(s, size, max) {
+  const out = []; let cur = "";
+  for (const w of s.split(" ")) { const t = cur ? cur + " " + w : w; if (cur && textW(t, size) > max) { out.push(cur); cur = w; } else cur = t; }
+  if (cur) out.push(cur); return out;
+}
 function belowLines(n) {
   const out = [];
   const tech = [n.stack, n.deploy].filter(Boolean).join(", ");
-  if (tech) out.push(tech); // 스택·배포 위치는 모든 칸에서 상자 아래에 둔다
-  for (const r of n.risks ?? []) out.push(`⚠ ${r}`);
+  if (tech && n.zone !== "external") out.push(tech); // 외부 노드는 배포처를 상자 안에 쓴다
+  for (const r of n.risks ?? []) out.push(...wrap(`⚠ ${r}`, 20, W)); // 경고는 상자 폭에서 줄을 바꾼다
   return out;
 }
 
 // 칸 제목 · 점선
-const usedCols = new Set(nodes.map(col));
 for (const [i, z] of ["client", "server", "external"].entries()) text(COLX[i] + W / 2, 40, ZONES[z], { fontSize: 28 });
 for (const x of [(COLX[0] + W + COLX[1]) / 2, (COLX[1] + W + COLX[2]) / 2]) line(x, 30, x, bottom, { head: false, dashed: true });
 
 // 노드
 for (const n of nodes) {
-  const { x, y } = pos.get(n.name);
-  els.push(base({ type: "rectangle", x, y, width: W, height: H, roundness: { type: 3 } }));
-  const label = [n.name, n.note].filter(Boolean).join("\n");
-  const size = 26, lines = label.split("\n").length;
-  text(x + W / 2, y + H / 2 - (lines * size * 1.25) / 2, label, { fontSize: size });
-  let by = y + H + 16;
+  const { x, y, h } = pos.get(n.name);
+  els.push(base({ type: "rectangle", x, y, width: W, height: h, roundness: { type: 3 } }));
+  const inline = n.zone === "external";
+  const label = inline ? [n.name + (n.deploy && n.deploy !== n.name ? ` · ${n.deploy}` : ""), (n.note ?? "").replace(/\n/g, " ")].filter(Boolean).join("\n") : [n.name, n.note].filter(Boolean).join("\n");
+  const lines = label.split("\n").length, size = Math.min(26, (h - 24) / (lines * 1.25), 26 * (W - 28) / textW(label, 26)); // 넘치면 줄인다
+  text(x + W / 2, y + h / 2 - (lines * size * 1.25) / 2, label, { fontSize: size });
+  let by = y + h + 16;
   for (const l of belowLines(n)) {
-    const risk = l.startsWith("⚠");
+    const risk = l !== [n.stack, n.deploy].filter(Boolean).join(", ");
     text(x + W / 2, by, l, { fontSize: risk ? 20 : 24, color: risk ? "#e03131" : "#1e1e1e" });
     by += 30;
   }
 }
 
 // 연결 — 경계점 사이에 긋는다. client→server 는 화살촉 없이(손그림 지도와 같게)
+const edges = [];
+for (const n of nodes) for (const t of n.to ?? []) if (byName.has(t)) edges.push([n.name, t]);
+const cy = (name) => pos.get(name).y + pos.get(name).h / 2;
+// 한 상자 옆면에 붙는 선들은 출발·도착점을 나눠 둔다(상대 노드 높이 순) — 한 점에서 다발로 나가지 않게
+const port = new Map(); // "a|b" -> [a 쪽 y, b 쪽 y]
+{
+  const sides = new Map(); // `${node}|${side}` -> [{ k, me, other }]
+  const push = (key, v) => (sides.get(key) ?? sides.set(key, []).get(key)).push(v);
+  for (const [a, b] of edges) {
+    const pa = pos.get(a), pb = pos.get(b);
+    if (pa.c === pb.c) continue;
+    const ra = pb.c > pa.c ? "R" : "L", rb = ra === "R" ? "L" : "R";
+    push(`${a}|${ra}`, { k: `${a}|${b}`, me: 0, other: b });
+    push(`${b}|${rb}`, { k: `${a}|${b}`, me: 1, other: a });
+  }
+  for (const [key, list] of sides) {
+    const nm = key.split("|")[0], p = pos.get(nm);
+    list.sort((u, v) => cy(u.other) - cy(v.other));
+    const gap = Math.min(28, (p.h - 30) / Math.max(1, list.length - 1));
+    list.forEach((u, i) => {
+      const cur = port.get(u.k) ?? [null, null];
+      cur[u.me] = cy(nm) + (i - (list.length - 1) / 2) * gap;
+      port.set(u.k, cur);
+    });
+  }
+}
 const anchor = (a, b) => {
   const pa = pos.get(a), pb = pos.get(b);
-  const ay = pa.y + H / 2, by = pb.y + H / 2;
+  const [pay, pby] = port.get(`${a}|${b}`) ?? [];
+  const ay = pay ?? cy(a), by = pby ?? cy(b);
   if (pb.c > pa.c) return [pa.x + W, ay, pb.x, by];
   if (pb.c < pa.c) return [pa.x, ay, pb.x + W, by];
-  return pb.y > pa.y ? [pa.x + W / 2, pa.y + H, pb.x + W / 2, pb.y] : [pa.x + W / 2, pa.y, pb.x + W / 2, pb.y + H];
+  return pb.y > pa.y ? [pa.x + W / 2, pa.y + pa.h, pb.x + W / 2, pb.y] : [pa.x + W / 2, pa.y, pb.x + W / 2, pb.y + pb.h];
+};
+// 서버 칸에서 상자·아래 글씨가 차지한 높이 구간 — 두 칸 건너는 선(클라이언트→로그인 제공자)은 그 사이 빈 길로 지난다
+const busy = (c) => nodes.filter((n) => pos.get(n.name).c === c).map((n) => { const p = pos.get(n.name); return [p.y - 14, p.y + p.h + 16 + belowLines(n).length * 30 + 10]; });
+const freeY = (c, want) => {
+  const bs = busy(c); if (!bs.some(([t, b]) => want > t && want < b)) return want;
+  const cands = bs.flatMap(([t, b]) => [t - 6, b + 6]).filter((y) => !bs.some(([t, b]) => y > t && y < b));
+  return cands.sort((u, v) => Math.abs(u - want) - Math.abs(v - want))[0] ?? want;
 };
 if (!req) {
-  for (const n of nodes) for (const t of n.to ?? []) {
-    if (!byName.has(t)) continue;
-    const [x1, y1, x2, y2] = anchor(n.name, t);
-    line(x1, y1, x2, y2, { head: !(n.zone === "client" && byName.get(t).zone === "server") });
+  for (const [a, b] of edges) {
+    const [x1, y1, x2, y2] = anchor(a, b);
+    const head = !(byName.get(a).zone === "client" && byName.get(b).zone === "server");
+    const ca = pos.get(a).c, cb = pos.get(b).c;
+    if (Math.abs(cb - ca) >= 2) {
+      const yf = freeY(ca + 1, y2);
+      const xa = COLX[ca + 1] - 40, xb = COLX[cb - 1] + W + 40;
+      if (Math.abs(yf - y2) < 2 && Math.abs(yf - y1) < 2) line(x1, y1, x2, y2, { head }); else poly([[x1, y1], [xa, yf], [xb, yf], [x2, y2]], { head });
+    } else line(x1, y1, x2, y2, { head });
   }
 } else {
   // 리퀘스트 맵: 인프라 연결은 옅게, 요청 단계는 빨간 번호 화살표로
@@ -185,9 +251,10 @@ for (const e of els) {
   else if (e.type === "ellipse") svgParts.push(`<ellipse cx="${e.x + e.width / 2}" cy="${e.y + e.height / 2}" rx="${e.width / 2}" ry="${e.height / 2}" fill="${e.backgroundColor}" stroke="none"/>` +
     [0, 1].map(() => `<ellipse cx="${j(e.x + e.width / 2)}" cy="${j(e.y + e.height / 2)}" rx="${e.width / 2 + rnd()}" ry="${e.height / 2 + rnd()}" ${st}/>`).join(""));
   else if (e.type === "arrow") {
-    const [x1, y1] = [e.x, e.y], [x2, y2] = [e.x + e.points[1][0], e.y + e.points[1][1]];
-    if (e.strokeStyle === "dashed") { svgParts.push(`<path d="${stroke1(x1, y1, x2, y2)}" ${st} stroke-dasharray="10 10"/>`); continue; }
-    let d = rough(x1, y1, x2, y2);
+    const P = e.points.map(([px, py]) => [e.x + px, e.y + py]);
+    const [x1, y1] = P.at(-2), [x2, y2] = P.at(-1);
+    if (e.strokeStyle === "dashed") { svgParts.push(`<path d="${stroke1(P[0][0], P[0][1], x2, y2)}" ${st} stroke-dasharray="10 10"/>`); continue; }
+    let d = P.slice(1).map((q, i) => rough(P[i][0], P[i][1], q[0], q[1])).join(" ");
     if (e.endArrowhead) {
       const a = Math.atan2(y2 - y1, x2 - x1);
       for (const s of [-1, 1]) d += " " + stroke1(x2, y2, x2 - 22 * Math.cos(a + s * 0.45), y2 - 22 * Math.sin(a + s * 0.45));
