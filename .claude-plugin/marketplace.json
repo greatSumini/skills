@@ -10,7 +10,7 @@
       "name": "matfia",
       "source": "./",
       "displayName": "Matfia",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "바이브마피아클럽 Claude Code skill 모음 + 마피아MCP. 커밋·출하, 도메인 스토리텔링·인프라 맵, Gmail·캘린더·전사, skill 제작 도구와 판단 카드 MCP(로그인 연결, 하루 10회 무료) · /matfia:plan·design·review·teach.",
       "author": {
         "name": "Sumin Choi",

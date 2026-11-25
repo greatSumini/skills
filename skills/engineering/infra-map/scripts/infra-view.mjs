@@ -150,7 +150,9 @@ if (!req) {
     let [x1, y1, x2, y2] = anchor(s.from, s.to);
     if (x1 !== x2) { y1 += off; y2 += off; } else { x1 += off; x2 += off; }
     line(x1, y1, x2, y2, { color: "#e03131", width: 2 });
-    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    // 두 칸을 건너는 선(클라이언트↔외부)은 번호를 가운데 칸 상자 위가 아니라 칸 사이 빈 곳에 둔다
+    const span = Math.abs(pos.get(s.to).c - pos.get(s.from).c), t = span >= 2 ? (pos.get(s.to).c > pos.get(s.from).c ? 0.8 : 0.2) : 0.5;
+    const mx = x1 + (x2 - x1) * t, my = y1 + (y2 - y1) * t;
     els.push(base({ type: "ellipse", x: mx - 17, y: my - 17, width: 34, height: 34, strokeColor: "#e03131", backgroundColor: "#ffffff" }));
     text(mx, my - 13, String(i + 1), { fontSize: 20, color: "#e03131" });
   }
