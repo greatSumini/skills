@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 이 레포를 직접 고치면서 쓰는 사람용(메인테이너) 설치 스크립트.
-# 배포 대상 skill(skills/harness/ 제외)을 ~/.claude/skills 와 ~/.agents/skills 에 심볼릭 링크로 건다.
+# 모든 skill 을 ~/.claude/skills 와 ~/.agents/skills 에 심볼릭 링크로 건다.
 # 링크라서 `git pull` 만 하면 최신이 된다. skill 을 추가·삭제·이름 변경한 뒤 다시 실행한다.
 set -euo pipefail
 
@@ -11,7 +11,7 @@ names=(); srcs=()
 while IFS= read -r -d '' skill_md; do
   src="$(dirname "$skill_md")"
   names+=("$(basename "$src")"); srcs+=("$src")
-done < <(find "$REPO/skills" -name SKILL.md -not -path '*/harness/*' -print0)
+done < <(find "$REPO/skills" -name SKILL.md -print0)
 
 for DEST in "${DESTS[@]}"; do
   if [ -L "$DEST" ]; then

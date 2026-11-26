@@ -3,7 +3,7 @@
 
 1. 모든 SKILL.md 에 frontmatter `name`·`description` 이 있고, name 이 폴더명과 같다.
 2. 배포 bucket(engineering)의 skill 은 marketplace.json matfia 항목 `skills` 와
-   최상위 README.md 와 bucket README.md 에 모두 있다. harness/ 는 거기 없어야 한다.
+   최상위 README.md 와 bucket README.md 에 모두 있다.
 3. 그 skills 경로가 실제로 있다.
 """
 import json, re, sys
@@ -11,7 +11,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PROMOTED = ["engineering"]
-NOT_SHIPPED = ["harness"]
 fail = []
 
 market = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
@@ -32,18 +31,15 @@ for skill_md in sorted((ROOT / "skills").glob("*/*/SKILL.md")):
         fail.append(f"{rel}: frontmatter name 이 폴더명({name})과 다름")
     if not keys.get("description", "").strip():
         fail.append(f"{rel}: description 없음")
-    if bucket not in PROMOTED + NOT_SHIPPED:
+    if bucket not in PROMOTED:
         fail.append(f"{rel}: 알 수 없는 bucket '{bucket}'")
     bucket_readme = d.parent / "README.md"
     if not bucket_readme.exists() or f"./{name}/SKILL.md" not in bucket_readme.read_text():
         fail.append(f"{rel}: skills/{bucket}/README.md 에 링크 없음")
-    if bucket in PROMOTED:
-        if rel not in shipped:
-            fail.append(f"{rel}: marketplace.json matfia skills 에 없음")
-        if f"./{rel}/SKILL.md" not in readme:
-            fail.append(f"{rel}: 최상위 README.md 에 링크 없음")
-    elif rel in shipped:
-        fail.append(f"{rel}: {bucket}/ 는 플러그인에 넣지 않는다")
+    if rel not in shipped:
+        fail.append(f"{rel}: marketplace.json matfia skills 에 없음")
+    if f"./{rel}/SKILL.md" not in readme:
+        fail.append(f"{rel}: 최상위 README.md 에 링크 없음")
 
 for p in shipped:
     if not (ROOT / p / "SKILL.md").exists():
