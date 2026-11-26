@@ -49,6 +49,16 @@ git clone https://github.com/greatSumini/skills ~/repos/greatSumini/skills
 
 `skills/harness/`의 skill은 프로젝트에 발판(`docs/`, `persuasion-data/`, `scripts/`)을 같이 깔아야 해서 플러그인에 없다. 아래 [하네스 이식](#하네스-이식)의 프롬프트로 설치한다.
 
+## Star History
+
+<a href="https://www.star-history.com/#greatSumini/skills&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=greatSumini/skills&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=greatSumini/skills&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=greatSumini/skills&type=Date" />
+ </picture>
+</a>
+
 ## Reference
 
 ### Engineering
